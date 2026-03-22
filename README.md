@@ -1,8 +1,193 @@
 # JobSync - Job Platform API
 
-A modern, async-first job platform API that crawls and aggregates job listings from multiple sources (starting with Greenhouse). Built with FastAPI, PostgreSQL, and Redis.
+A modern, async-first job platform API that crawls and aggregates job listings from multiple sources. Built with FastAPI, PostgreSQL, and Redis.
 
-## Overview
+---
+
+## 🚀 Quick Start - How to Run
+
+### Fastest Way (Docker Compose - 2 minutes)
+
+```bash
+# Clone and navigate to project
+git clone <repository-url>
+cd JobSync
+
+# Start all services
+docker-compose up --build
+
+# The API is now running at http://localhost:8000
+```
+
+✅ API: http://localhost:8000  
+✅ Swagger Docs: http://localhost:8000/docs  
+✅ PostgreSQL: localhost:5432  
+✅ Redis: localhost:6379
+
+**That's it!** Your job platform is running with all services configured.
+
+### Quick Test Commands
+
+```bash
+# List all jobs
+curl http://localhost:8000/jobs
+
+# Search jobs
+curl "http://localhost:8000/jobs?q=python"
+
+# Health check
+curl http://localhost:8000/health
+```
+
+### Want API Documentation?
+Visit **http://localhost:8000/docs** in your browser for interactive Swagger documentation.
+
+---
+
+## 📖 Table of Contents
+
+### Getting Started
+- [🚀 Quick Start - How to Run](#-quick-start---how-to-run)
+- [🔧 How to Setup (Detailed)](#-how-to-setup-detailed)
+
+### Technical Documentation
+- **[📚 Technical Details](#-technical-details)**
+  - Overview
+  - Technology Stack
+  - System Architecture
+  - Project Structure
+  - API Endpoints Reference
+  - Database Schema Design
+  - Environment Configuration
+  - Database Migrations
+  - Data Crawlers & Pipelines
+  - Bulk ATS Configuration System
+  - Development & Testing
+  - Structured Logging
+  - API Usage Examples
+  - Production Deployment
+  - Troubleshooting & Support
+  - Contributing & Development
+  - Roadmap & Future Enhancements
+
+### Configuration & Bulk Ingestion
+- See [BULK_CONFIG_GUIDE.md](BULK_CONFIG_GUIDE.md) for comprehensive bulk ATS configuration documentation
+- See [BULK_CONFIG_CHEATSHEET.md](BULK_CONFIG_CHEATSHEET.md) for quick reference commands
+- See [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) for documentation navigation
+
+---
+
+## 🔧 How to Setup (Detailed)
+
+### Prerequisites
+
+**Option A: Docker (Recommended)**
+- Docker and Docker Compose installed
+- 4GB RAM available
+
+**Option B: Local Development**
+- Python 3.12+
+- PostgreSQL 16+
+- Redis 7+
+- Poetry (Python package manager)
+
+### Setup Option 1: Docker Compose (Recommended)
+
+```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd JobSync
+
+# 2. Start all services (builds on first run)
+docker-compose up --build
+
+# Wait for messages:
+# - "api | Application startup complete"
+# - "postgres | database system is ready to accept connections"
+# - "redis | Ready to accept connections"
+
+# 3. Verify everything works
+curl http://localhost:8000/health
+
+# To stop services
+docker-compose down
+```
+
+**What Docker Compose Sets Up:**
+- PostgreSQL database with schemas
+- Redis cache server
+- FastAPI application server
+- Automatic database migrations
+- Health checks for all services
+
+### Setup Option 2: Local Development
+
+#### Step 1: Install Dependencies
+
+```bash
+# Install Poetry (Python package manager)
+pip install poetry
+
+# Clone repository
+git clone <repository-url>
+cd JobSync
+
+# Install project dependencies
+poetry install
+```
+
+#### Step 2: Configure Environment
+
+```bash
+# Create .env file from template
+cp .env.example .env
+
+# Edit .env with your local settings
+# Typical local configuration:
+# DATABASE_URL=postgresql+asyncpg://jobplatform:jobplatform@localhost:5432/jobplatform
+# REDIS_URL=redis://localhost:6379/0
+# ENVIRONMENT=development
+# LOG_LEVEL=INFO
+# JSON_LOGS=false
+```
+
+#### Step 3: Setup Database
+
+```bash
+# Make sure PostgreSQL is running
+# Then run migrations
+poetry run alembic upgrade head
+```
+
+#### Step 4: Start the Server
+
+```bash
+# Start FastAPI development server (auto-reloads on changes)
+poetry run uvicorn job_platform.api.main:app --reload --host 0.0.0.0 --port 8000
+
+# Server running at http://localhost:8000
+```
+
+### Verify Setup Works
+
+After starting (either Docker or local), test these endpoints:
+
+```bash
+# Health check
+curl http://localhost:8000/health
+
+# List jobs
+curl http://localhost:8000/jobs
+
+# View API docs
+open http://localhost:8000/docs
+```
+
+---
+
+## 📚 Technical Details
+
+### Overview
 
 JobSync is designed to:
 - **Fetch job listings** from Greenhouse-powered job boards via the Greenhouse Job Board API
@@ -12,8 +197,6 @@ JobSync is designed to:
 - **Provide a REST API** for querying job listings
 - **Track companies** and their associated job postings
 - **Manage database migrations** with Alembic for easy version control
-
-## Architecture
 
 ### Technology Stack
 
@@ -29,7 +212,7 @@ JobSync is designed to:
 | **Logging** | structlog | Structured logging with JSON support |
 | **Container** | Docker/Docker Compose | Containerization and orchestration |
 
-### High-Level Architecture
+### System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -62,7 +245,7 @@ JobSync is designed to:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Project Structure
+### Project Structure & Organization
 
 ```
 JobSync/
@@ -101,7 +284,7 @@ JobSync/
 └── .env                 # Environment variables (not in repo)
 ```
 
-## API Endpoints
+### API Endpoints Reference
 
 ### Jobs
 - **GET /jobs** - List all jobs with search and pagination
@@ -120,7 +303,7 @@ JobSync/
 ### Health Check
 - **GET /health** - Docker health check endpoint (implicit from FastAPI)
 
-## Database Schema
+### Database Schema Design
 
 ### Companies Table
 ```sql
@@ -152,7 +335,7 @@ CREATE TABLE jobs (
 );
 ```
 
-## Configuration
+### Environment Configuration
 
 The application is configured via environment variables (loaded from `.env` file):
 
@@ -187,53 +370,7 @@ API:
   Port: 8000
 ```
 
-## Quick Start
-
-### Prerequisites
-- **Docker** and **Docker Compose** (recommended)
-- OR: Python 3.12+, PostgreSQL 16+, Redis 7+
-
-### Option 1: Docker Compose (Recommended)
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd JobSync
-
-# Start all services
-docker-compose up --build
-
-# The API will be available at http://localhost:8000
-# PostgreSQL: localhost:5432
-# Redis: localhost:6379
-```
-
-The Docker setup will:
-1. Create PostgreSQL and Redis services
-2. Build the API Docker image
-3. Run database migrations automatically
-4. Start the FastAPI server on port 8000
-
-### Option 2: Local Development
-
-```bash
-# Install Poetry (Python package manager)
-pip install poetry
-
-# Install dependencies
-poetry install
-
-# Create .env file
-cp .env.example .env  # Edit DATABASE_URL and REDIS_URL if needed
-
-# Run migrations
-alembic upgrade head
-
-# Start the API server
-uvicorn job_platform.api.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-## Database Migrations
+### Database Migrations & Schema Management
 
 ### Why Alembic?
 Alembic provides version-controlled database schema management, allowing safe and reversible database changes.
@@ -259,7 +396,7 @@ alembic history
 1. **0001_initial_companies_and_jobs.py**: Creates `companies` and `jobs` tables with relationships
 2. **0002_job_search_indexes.py**: Adds indexes for search optimization
 
-## Crawler & Pipeline
+### Data Crawlers & Pipelines
 
 ### Greenhouse Crawler
 
@@ -302,7 +439,44 @@ async def example():
     print(f"Inserted: {result.inserted}, Duplicates: {result.skipped_duplicates}")
 ```
 
-## Development
+### Bulk ATS Configuration System
+
+JobSync includes a comprehensive bulk configuration management system for handling 20+ companies per ATS:
+
+**Features:**
+- Auto-generated SOURCES from company lists
+- Automatic deduplication and validation
+- CLI management interface (7 commands)
+- Programmatic Python API
+- Comprehensive testing (50+ tests)
+
+**Current Configuration:**
+- **Greenhouse**: 20 companies
+- **Lever**: 10 companies  
+- **Workday**: 5 companies
+- **URL-based**: 3 aggregators
+- **Total**: 38 sources
+
+**Quick Start:**
+```bash
+# View configuration
+python -m job_platform.crawler.sources config
+
+# Add companies
+python -m job_platform.crawler.sources add-companies greenhouse stripe airbnb
+
+# Validate
+python -m job_platform.crawler.sources validate
+```
+
+**Documentation:**
+- [BULK_CONFIG_GUIDE.md](BULK_CONFIG_GUIDE.md) - Complete technical guide
+- [BULK_CONFIG_CHEATSHEET.md](BULK_CONFIG_CHEATSHEET.md) - Quick reference
+- [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Upgrade from old system
+- [SYSTEM_OVERVIEW.md](SYSTEM_OVERVIEW.md) - Architecture & design
+- [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) - Navigation guide
+
+### Development & Testing
 
 ### Project Dependencies (Poetry)
 
@@ -350,7 +524,7 @@ pylint job_platform/
 mypy job_platform/
 ```
 
-## Logging
+### Structured Logging System
 
 The application uses **structlog** for structured logging:
 
@@ -363,7 +537,7 @@ LOG_LEVEL=DEBUG      # Increase verbosity
 JSON_LOGS=true       # Enable JSON output
 ```
 
-## API Usage Examples
+### API Usage Examples
 
 ### List All Jobs
 ```bash
@@ -399,7 +573,7 @@ curl "http://localhost:8000/jobs/550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-## Running in Production
+### Production Deployment & Operations
 
 ### Docker Compose Production
 
@@ -427,7 +601,7 @@ Docker automatically monitors service health:
 - Use load balancers for multiple API instances
 - Implement job queue for crawler tasks (Celery, RQ, etc.)
 
-## Troubleshooting
+### Troubleshooting & Support
 
 ### Database Connection Issues
 ```bash
@@ -459,7 +633,7 @@ docker-compose exec api alembic history
 - Monitor logs: `LOG_LEVEL=DEBUG`
 - Ensure database and Redis are accessible
 
-## Contributing
+### Contributing & Development Workflow
 
 ### Development Workflow
 1. Create a feature branch: `git checkout -b feature/your-feature`
@@ -475,7 +649,7 @@ docker-compose exec api alembic history
 - Keep functions small and focused
 - Use async/await for I/O operations
 
-## Future Enhancements
+## Roadmap & Future Enhancements
 
 - [ ] Support for additional job board APIs (LinkedIn, Indeed, etc.)
 - [ ] Job recommendation engine
