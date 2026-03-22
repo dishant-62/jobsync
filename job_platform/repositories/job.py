@@ -44,6 +44,11 @@ class JobRepository:
         description: str,
         apply_url: str,
         posted_date: date,
+        skills: list[str] | None = None,
+        experience_level: str | None = None,
+        salary_min: int | None = None,
+        salary_max: int | None = None,
+        is_remote: bool = False,
     ) -> Job:
         job = Job(
             company_id=company_id,
@@ -52,6 +57,11 @@ class JobRepository:
             description=description,
             apply_url=apply_url,
             posted_date=posted_date,
+            skills=skills,
+            experience_level=experience_level,
+            salary_min=salary_min,
+            salary_max=salary_max,
+            is_remote=is_remote,
         )
         self._session.add(job)
         await self._session.flush()
