@@ -1,7 +1,8 @@
 import axios from 'axios'
 import type { JobListResponse } from '../types'
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000'
+// Use /api proxy in development, or direct URL in production
+const API_BASE_URL = process.env.NODE_ENV === 'development' ? '/api' : process.env.REACT_APP_API_URL || 'http://localhost:8000'
 
 const client = axios.create({
   baseURL: API_BASE_URL,
