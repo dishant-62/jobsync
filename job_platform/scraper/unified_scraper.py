@@ -190,8 +190,7 @@ async def normalize_raw_job(raw_data: dict[str, Any], source: str) -> RawJob | N
             source=source,
             company=raw_data.get("company", "unknown"),
             title=raw_data.get("title", "unknown"),
-            validation_errors=e.errors(),
-            exc_info=True
+            validation_errors=e.errors()
         )
         return None
 
@@ -201,7 +200,6 @@ async def normalize_raw_job(raw_data: dict[str, Any], source: str) -> RawJob | N
             source=source,
             company=raw_data.get("company", "unknown"),
             title=raw_data.get("title", "unknown"),
-            error=str(e),
-            exc_info=True
+            error=str(e)
         )
         return None

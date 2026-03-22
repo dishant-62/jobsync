@@ -41,3 +41,37 @@ class RawJob(BaseModel):
             "posted_date": self.posted_date,
             "source": self.source,
         }
+
+
+class ParsedJob(BaseModel):
+    """
+    Structured information extracted from job descriptions.
+
+    Contains parsed fields like skills, experience level, salary range, and remote work status.
+    """
+
+    skills: list[str] = Field(default_factory=list, description="List of technical skills mentioned")
+    experience_level: str | None = Field(None, description="Experience level (entry, mid, senior)")
+    salary_min: int | None = Field(None, description="Minimum salary (in USD)")
+    salary_max: int | None = Field(None, description="Maximum salary (in USD)")
+    is_remote: bool = Field(False, description="Whether the job allows remote work")
+
+    def to_dict(self) -> dict[str, list[str] | str | int | bool | None]:
+        """Convert to dictionary for database operations."""
+        return {
+            "skills": self.skills,
+            "experience_level": self.experience_level,
+            "salary_min": self.salary_min,
+            "salary_max": self.salary_max,
+            "is_remote": self.is_remote,
+        }
+
+
+class FinalJob(RawJob, ParsedJob):
+    """
+    Complete job representation combining raw data and parsed information.
+
+    Inherits from both RawJob and ParsedJob to provide comprehensive job data.
+    """
+
+    pass
