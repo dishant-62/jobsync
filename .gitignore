@@ -1,0 +1,93 @@
+# Python / Backend
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Poetry lock file (optional to commit, but often excluded)
+poetry.lock
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+
+# Logs
+*.log
+logs/
+
+# Cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Node.js / Frontend
+
+# Dependencies
+_frontend/node_modules/
+_frontend/.pnp
+_frontend/.pnp.js
+
+# Production build
+_frontend/dist/
+_frontend/build/
+
+# Misc
+_frontend/.DS_Store
+_frontend/*.pem
+
+# Debug
+_frontend/npm-debug.log*
+_frontend/yarn-debug.log*
+_frontend/yarn-error.log*
+_frontend/lerna-debug.log*
+
+# Environment variables
+_frontend/.env
+_frontend/.env.local
+_frontend/.env.*.local
+
+# Editor directories and files
+_frontend/.vscode/*
+!_frontend/.vscode/extensions.json
+_frontend/.idea
+_frontend/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+
+# Docker (local volumes)
+postgres_data/
+redis_data/

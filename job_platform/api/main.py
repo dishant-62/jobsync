@@ -6,6 +6,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from job_platform.api.routes import jobs as jobs_routes
 from job_platform.config import get_settings
@@ -45,6 +46,22 @@ def create_app() -> FastAPI:
         title="Job Platform",
         version="0.1.0",
         lifespan=lifespan,
+    )
+
+    # Add CORS middleware to allow frontend requests
+    settings = get_settings()
+    allowed_origins = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"]
+    if settings.is_production:
+        allowed_origins.extend([
+            "https://jobsync.example.com",  # Change to your production domain
+        ])
+
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     application.include_router(jobs_routes.router)
