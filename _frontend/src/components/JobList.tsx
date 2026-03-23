@@ -12,7 +12,7 @@ export const JobList: React.FC<JobListProps> = ({ jobs, isLoading, error }) => {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <h3 className="text-red-900 font-semibold mb-2">Error</h3>
+        <h3 className="text-textPrimary font-semibold mb-2">Error</h3>
         <p className="text-red-800">{error}</p>
       </div>
     )
@@ -29,7 +29,7 @@ export const JobList: React.FC<JobListProps> = ({ jobs, isLoading, error }) => {
   if (jobs.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 text-lg">No jobs found. Try adjusting your search.</p>
+        <p className="text-textSecondary text-lg">No jobs found. Try adjusting your search.</p>
       </div>
     )
   }

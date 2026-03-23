@@ -58,13 +58,13 @@ export const JobDetail: React.FC = () => {
   const salaryRange = job ? formatSalary(job.salary_min ?? undefined, job.salary_max ?? undefined) : null
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white shadow-sm border-b border-border">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">💼 JobSync</h1>
-            <p className="text-gray-600 mt-1">View job details</p>
+            <h1 className="text-3xl font-bold text-textPrimary">💼 JobSync</h1>
+            <p className="text-textSecondary mt-1">View job details</p>
           </div>
         </div>
       </header>
@@ -74,7 +74,7 @@ export const JobDetail: React.FC = () => {
         {/* Back Button */}
         <button
           onClick={handleBack}
-          className="mb-6 flex items-center text-blue-600 hover:text-blue-800 font-medium transition"
+          className="mb-6 flex items-center text-primary hover:text-primaryHover font-medium transition"
         >
           <span className="text-xl mr-2">←</span>
           Back to Jobs
@@ -101,25 +101,25 @@ export const JobDetail: React.FC = () => {
         {job && !isLoading && (
           <div className="space-y-6">
             {/* Header Section */}
-            <div className="bg-white rounded-lg shadow p-8">
+            <div className="card p-8">
               {/* Title and Company */}
               <div className="mb-6">
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">{job.title}</h1>
-                <p className="text-xl text-blue-600 font-semibold">{job.company.name}</p>
+                <h1 className="text-4xl font-bold text-textPrimary mb-2">{job.title}</h1>
+                <p className="text-xl text-primary font-semibold">{job.company.name}</p>
               </div>
 
               {/* Meta Information */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-gray-200">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-border">
                 {/* Location */}
                 <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">📍 Location</p>
-                  <p className="text-gray-900 font-semibold">{job.location}</p>
+                  <p className="text-textSecondary text-sm font-medium mb-1">📍 Location</p>
+                  <p className="text-textPrimary font-semibold">{job.location}</p>
                 </div>
 
                 {/* Remote */}
                 <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">💻 Work Mode</p>
-                  <p className="text-gray-900 font-semibold">
+                  <p className="text-textSecondary text-sm font-medium mb-1">💻 Work Mode</p>
+                  <p className="text-textPrimary font-semibold">
                     {job.is_remote ? 'Remote' : 'On-site'}
                   </p>
                 </div>
@@ -127,24 +127,24 @@ export const JobDetail: React.FC = () => {
                 {/* Experience Level */}
                 {job.experience_level && (
                   <div>
-                    <p className="text-gray-600 text-sm font-medium mb-1">📊 Experience</p>
-                    <p className="text-gray-900 font-semibold capitalize">{job.experience_level}</p>
+                    <p className="text-textSecondary text-sm font-medium mb-1">📊 Experience</p>
+                    <p className="text-textPrimary font-semibold capitalize">{job.experience_level}</p>
                   </div>
                 )}
 
                 {/* Salary */}
                 {salaryRange && (
                   <div>
-                    <p className="text-gray-600 text-sm font-medium mb-1">💰 Salary</p>
-                    <p className="text-gray-900 font-semibold">{salaryRange}</p>
+                    <p className="text-textSecondary text-sm font-medium mb-1">💰 Salary</p>
+                    <p className="text-textPrimary font-semibold">{salaryRange}</p>
                   </div>
                 )}
 
                 {/* Posted Date */}
                 {!salaryRange && (
                   <div>
-                    <p className="text-gray-600 text-sm font-medium mb-1">📅 Posted</p>
-                    <p className="text-gray-900 font-semibold">{postedDate}</p>
+                    <p className="text-textSecondary text-sm font-medium mb-1">📅 Posted</p>
+                    <p className="text-textPrimary font-semibold">{postedDate}</p>
                   </div>
                 )}
               </div>
@@ -158,10 +158,10 @@ export const JobDetail: React.FC = () => {
             </div>
 
             {/* Description Section */}
-            <div className="bg-white rounded-lg shadow p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Job Description</h2>
+            <div className="card p-8">
+              <h2 className="text-2xl font-bold text-textPrimary mb-4">Job Description</h2>
               <div className="prose prose-sm max-w-none">
-                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                <p className="text-textPrimary whitespace-pre-wrap leading-relaxed">
                   {job.description}
                 </p>
               </div>
@@ -169,13 +169,13 @@ export const JobDetail: React.FC = () => {
 
             {/* Skills Section */}
             {job.skills && job.skills.length > 0 && (
-              <div className="bg-white rounded-lg shadow p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Required Skills</h2>
+              <div className="card p-8">
+                <h2 className="text-2xl font-bold text-textPrimary mb-4">Required Skills</h2>
                 <div className="flex flex-wrap gap-3">
                   {job.skills.map((skill, index) => (
                     <span
                       key={index}
-                      className="px-4 py-2 bg-blue-100 text-blue-800 font-medium text-sm rounded-full hover:bg-blue-200 transition"
+                      className="px-4 py-2 bg-primaryLight text-primary font-medium text-sm rounded-full hover:bg-primary transition"
                     >
                       {skill}
                     </span>
@@ -185,20 +185,20 @@ export const JobDetail: React.FC = () => {
             )}
 
             {/* Apply Section */}
-            <div className="bg-white rounded-lg shadow p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Ready to Apply?</h2>
-              <p className="text-gray-700 mb-6">
+            <div className="card p-8">
+              <h2 className="text-2xl font-bold text-textPrimary mb-4">Ready to Apply?</h2>
+              <p className="text-textSecondary mb-6">
                 Click the button below to visit the company's application page.
               </p>
               <a
                 href={job.apply_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block px-8 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition shadow-md"
+                className="btn-primary bg-success hover:bg-green-700"
               >
                 🚀 Apply Now
               </a>
-              <p className="text-gray-500 text-sm mt-4">
+              <p className="text-textSecondary text-sm mt-4">
                 You'll be redirected to the company's careers page
               </p>
             </div>

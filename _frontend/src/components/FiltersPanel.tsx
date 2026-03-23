@@ -104,14 +104,14 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isL
   const hasActiveFilters = location || experienceLevel || isRemote || selectedSkills.length > 0
 
   return (
-    <div className="mb-6 bg-white p-6 rounded-lg shadow">
+    <div className="mb-6 card p-6">
       {/* Filters Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">🔽 Filters</h3>
+        <h3 className="text-lg font-semibold text-textPrimary">🔽 Filters</h3>
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium disabled:text-gray-400"
+            className="text-sm text-primary hover:text-primaryHover font-medium disabled:text-textSecondary"
             disabled={isLoading}
           >
             Clear All
@@ -132,7 +132,7 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isL
             value={location}
             onChange={handleLocationChange}
             disabled={isLoading}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 transition"
+            className="w-full input-base disabled:bg-gray-100"
           />
         </div>
 
@@ -146,7 +146,7 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isL
             value={experienceLevel}
             onChange={handleExperienceLevelChange}
             disabled={isLoading}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 transition"
+            className="w-full input-base disabled:bg-gray-100"
           >
             <option value="">All Levels</option>
             {EXPERIENCE_LEVELS.map((level) => (
@@ -165,9 +165,9 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isL
               checked={isRemote}
               onChange={handleRemoteToggle}
               disabled={isLoading}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 cursor-pointer"
+              className="w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary disabled:bg-gray-100 cursor-pointer"
             />
-            <span className="ml-2 text-sm font-medium text-gray-700">💻 Remote Only</span>
+            <span className="ml-2 text-sm font-medium text-textPrimary">💻 Remote Only</span>
           </label>
         </div>
 

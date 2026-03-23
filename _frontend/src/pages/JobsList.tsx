@@ -76,15 +76,15 @@ function JobsList() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white shadow-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-textPrimary">
               💼 JobSync
             </h1>
-            <p className="text-gray-600 mt-1">Discover your next opportunity</p>
+            <p className="text-textSecondary mt-1">Discover your next opportunity</p>
           </div>
         </div>
       </header>
@@ -99,8 +99,8 @@ function JobsList() {
 
         {/* Job Count */}
         {total > 0 && (
-          <div className="mb-4 text-sm text-gray-600">
-            Found <span className="font-semibold">{total}</span> job(s)
+          <div className="mb-4 text-sm text-textSecondary">
+            Found <span className="font-semibold text-textPrimary">{total}</span> job(s)
           </div>
         )}
 

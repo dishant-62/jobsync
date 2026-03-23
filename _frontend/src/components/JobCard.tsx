@@ -27,18 +27,18 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
   const salaryRange = formatSalary(job.salary_min ?? undefined, job.salary_max ?? undefined)
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer">
+    <div className="card p-6 hover:shadow-lg transition cursor-pointer">
       {/* Clickable header area */}
       <Link to={`/jobs/${job.id}`} className="block hover:opacity-90 transition">
         <div className="mb-3">
-          <h3 className="text-xl font-semibold text-gray-900 mb-1 hover:text-blue-600 transition">
+          <h3 className="text-xl font-semibold text-textPrimary mb-1 hover:text-primary transition">
             {job.title}
           </h3>
-          <p className="text-base text-blue-600 font-medium">{job.company.name}</p>
+          <p className="text-base text-primary font-medium">{job.company.name}</p>
         </div>
 
         {/* Location and Meta Info */}
-        <div className="flex flex-wrap gap-3 mb-4 text-sm text-gray-600">
+        <div className="flex flex-wrap gap-3 mb-4 text-sm text-textSecondary">
           <span>📍 {job.location}</span>
           {job.is_remote && <span>💻 Remote</span>}
           {job.experience_level && <span>📊 {job.experience_level}</span>}
@@ -46,7 +46,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
         </div>
 
         {/* Description */}
-        <p className="text-gray-700 text-sm mb-4">
+        <p className="text-textPrimary text-sm mb-4">
           {truncateDescription(job.description)}
         </p>
       </Link>
@@ -75,13 +75,13 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-textSecondary">
           Posted: {postedDate}
         </span>
         <div className="flex gap-2">
           <Link
             to={`/jobs/${job.id}`}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition"
+            className="btn-primary"
           >
             View Details
           </Link>
@@ -89,7 +89,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
             href={job.apply_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition"
+            className="btn-primary bg-success hover:bg-green-700"
           >
             Apply Now
           </a>

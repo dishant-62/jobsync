@@ -24,9 +24,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
   }, [debouncedQuery, onSearch])
 
   return (
-    <div className="mb-6 bg-white p-6 rounded-lg shadow">
+    <div className="mb-6 card p-6">
       <div>
-        <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="search" className="block text-sm font-medium text-textSecondary mb-2">
           🔍 Search Jobs
         </label>
         <input
@@ -36,7 +36,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = fals
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           disabled={isLoading}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 transition"
+          className="w-full input-base disabled:bg-gray-100"
         />
       </div>
     </div>

@@ -35,8 +35,8 @@ export const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <div className="mt-8 flex items-center justify-between bg-white p-4 rounded-lg shadow">
-      <div className="text-sm text-gray-600">
+    <div className="mt-8 flex items-center justify-between card p-4">
+      <div className="text-sm text-textSecondary">
         Showing {offset + 1} to {Math.min(offset + limit, total)} of {total} jobs
       </div>
 
@@ -44,7 +44,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={handlePrevious}
           disabled={currentPage === 1 || isLoading}
-          className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 transition"
+          className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-textPrimary bg-white hover:bg-primaryLight disabled:bg-gray-100 disabled:text-textSecondary transition"
         >
           Previous
         </button>
@@ -56,7 +56,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={handleNext}
           disabled={currentPage === totalPages || isLoading}
-          className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 transition"
+          className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-textPrimary bg-white hover:bg-primaryLight disabled:bg-gray-100 disabled:text-textSecondary transition"
         >
           Next
         </button>
