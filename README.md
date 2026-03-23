@@ -72,8 +72,8 @@ Visit **http://localhost:8000/docs** in your browser for interactive Swagger doc
 
 ### Configuration & Bulk Ingestion
 - See [BULK_CONFIG_GUIDE.md](BULK_CONFIG_GUIDE.md) for comprehensive bulk ATS configuration documentation
-- See [BULK_CONFIG_CHEATSHEET.md](BULK_CONFIG_CHEATSHEET.md) for quick reference commands
-- See [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) for documentation navigation
+- See [ARCHITECTURE.md](ARCHITECTURE.md) for system design and data flow details
+- See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for database migration lifecycle and rules
 
 ---
 
