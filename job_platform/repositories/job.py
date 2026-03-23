@@ -8,6 +8,7 @@ from datetime import date
 
 from sqlalchemy import ColumnElement, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from job_platform.db.models import Job
 
@@ -15,8 +16,11 @@ from job_platform.db.models import Job
 def _job_search_conditions(
     q: str | None,
     location: str | None,
+    experience_level: str | None,
+    is_remote: bool | None,
+    skills: list[str] | None,
 ) -> ColumnElement[bool] | None:
-    """Build WHERE fragments for text search (used with pg_trgm-backed GIN indexes)."""
+    """Build WHERE fragments for text search and filtering."""
     conditions: list[ColumnElement[bool]] = []
     if q is not None and q.strip():
         pattern = f"%{q.strip()}%"
@@ -24,6 +28,17 @@ def _job_search_conditions(
     if location is not None and location.strip():
         loc_pattern = f"%{location.strip()}%"
         conditions.append(Job.location.ilike(loc_pattern))
+    if experience_level is not None and experience_level.strip():
+        conditions.append(Job.experience_level.ilike(experience_level.strip()))
+    if is_remote is True:
+        conditions.append(Job.is_remote == True)
+    
+    # Note: Skills filtering is disabled for now due to JSON array complexity
+    # To enable: implement PostgreSQL JSON operators or denormalize skills data
+    # if skills and len(skills) > 0:
+    #     # Would require: Job.skills.op('&&')(skills) for PostgreSQL overlap operator
+    #     pass
+    
     if not conditions:
         return None
     return and_(*conditions)
@@ -76,9 +91,17 @@ class JobRepository:
         result = await self._session.execute(select(Job).where(Job.id == job_id))
         return result.scalar_one_or_none()
 
-    async def count_jobs(self, *, q: str | None, location: str | None) -> int:
+    async def count_jobs(
+        self,
+        *,
+        q: str | None,
+        location: str | None,
+        experience_level: str | None = None,
+        is_remote: bool | None = None,
+        skills: list[str] | None = None,
+    ) -> int:
         stmt = select(func.count()).select_from(Job)
-        where_clause = _job_search_conditions(q, location)
+        where_clause = _job_search_conditions(q, location, experience_level, is_remote, skills)
         if where_clause is not None:
             stmt = stmt.where(where_clause)
         result = await self._session.execute(stmt)
@@ -89,11 +112,16 @@ class JobRepository:
         *,
         q: str | None,
         location: str | None,
+        experience_level: str | None = None,
+        is_remote: bool | None = None,
+        skills: list[str] | None = None,
         limit: int,
         offset: int,
     ) -> list[Job]:
         stmt = select(Job)
-        where_clause = _job_search_conditions(q, location)
+        # Eagerly load company relationship to avoid lazy loading issues
+        stmt = stmt.options(selectinload(Job.company))
+        where_clause = _job_search_conditions(q, location, experience_level, is_remote, skills)
         if where_clause is not None:
             stmt = stmt.where(where_clause)
         stmt = stmt.order_by(Job.created_at.desc()).limit(limit).offset(offset)

@@ -15,7 +15,11 @@ RUN apt-get update \
 
 RUN pip install --no-cache-dir poetry==1.8.4
 
-COPY pyproject.toml poetry.lock alembic.ini ./
+COPY pyproject.toml ./
+# Copy poetry.lock if it exists, otherwise dependencies will be resolved from pyproject.toml
+COPY poetry.lock* ./
+COPY alembic.ini ./
+
 RUN poetry install --no-ansi --only main --no-root \
     && rm -rf "$POETRY_CACHE_DIR"
 

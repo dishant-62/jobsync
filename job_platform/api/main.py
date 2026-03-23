@@ -64,7 +64,8 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    application.include_router(jobs_routes.router)
+    # Include job routes with /api/v1 prefix
+    application.include_router(jobs_routes.router, prefix="/api/v1")
 
     @application.get("/health", tags=["system"])
     async def health() -> dict[str, str]:

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { SearchBar } from './components/SearchBar'
+import { FiltersPanel } from './components/FiltersPanel'
 import { JobList } from './components/JobList'
 import { Pagination } from './components/Pagination'
 import { jobApi } from './api/client'
@@ -11,18 +12,30 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Search and filter state
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchLocation, setSearchLocation] = useState('')
+  const [location, setLocation] = useState('')
+  const [experienceLevel, setExperienceLevel] = useState('')
+  const [isRemote, setIsRemote] = useState(false)
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
   const [limit] = useState(20)
   const [offset, setOffset] = useState(0)
 
-  // Fetch jobs on component mount and when search/pagination changes
+  // Fetch jobs on component mount and when filters/pagination changes
   const fetchJobs = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const response = await jobApi.listJobs(searchQuery, searchLocation, limit, offset)
+      const response = await jobApi.listJobs({
+        q: searchQuery,
+        location: location || undefined,
+        experience_level: experienceLevel || undefined,
+        is_remote: isRemote ? true : undefined,
+        skills: selectedSkills.length > 0 ? selectedSkills : undefined,
+        limit,
+        offset,
+      })
       setJobs(response.jobs)
       setTotal(response.total)
     } catch (err) {
@@ -33,15 +46,27 @@ function App() {
     } finally {
       setIsLoading(false)
     }
-  }, [searchQuery, searchLocation, limit, offset])
+  }, [searchQuery, location, experienceLevel, isRemote, selectedSkills, limit, offset])
 
   useEffect(() => {
     fetchJobs()
   }, [fetchJobs])
 
-  const handleSearch = (query: string, location: string) => {
+  const handleSearch = (query: string) => {
     setSearchQuery(query)
-    setSearchLocation(location)
+    setOffset(0) // Reset to first page
+  }
+
+  const handleFiltersChange = (filters: {
+    location: string
+    experience_level: string
+    is_remote: boolean
+    skills: string[]
+  }) => {
+    setLocation(filters.location)
+    setExperienceLevel(filters.experience_level)
+    setIsRemote(filters.is_remote)
+    setSelectedSkills(filters.skills)
     setOffset(0) // Reset to first page
   }
 
@@ -66,6 +91,9 @@ function App() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Search Bar */}
         <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+
+        {/* Filters Panel */}
+        <FiltersPanel onFiltersChange={handleFiltersChange} isLoading={isLoading} />
 
         {/* Job Count */}
         {total > 0 && (

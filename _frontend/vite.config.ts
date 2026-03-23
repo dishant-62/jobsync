@@ -6,14 +6,9 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/jobs': {
+      '/api/v1': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-      },
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },
