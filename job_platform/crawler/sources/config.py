@@ -52,7 +52,7 @@ class SourceConfig:
             raise ValueError(f"Unknown source type: {self.source_type}")
 
         # Company-based sources need company identifier
-        if self.source_type in {"greenhouse", "lever", "workday", "wellfound"}:
+        if self.source_type in {"greenhouse", "lever", "workday"}:
             if not self.company:
                 raise ValueError(
                     f"{self.source_type} requires 'company' field"
@@ -91,6 +91,16 @@ GREENHOUSE_COMPANIES = [
     "instacart",
     "yelp",
     "asana",
+    # Extended list - 50+ additional companies
+    "affirm", "benchling", "brex", "checkr", "chime", "cloverhealth",
+    "coursera", "cruise", "ginkgo", "gusto", "hashicorp", "intercom",
+    "khanacademy", "lime", "loom", "lyft", "medium", "mixpanel",
+    "mongodb", "okta", "opendoor", "pagerduty", "palantir", "plaid",
+    "postman", "quora", "segment", "snap", "uber", "zapier",
+    "atlassian", "box", "cloudera", "databricks", "elastic", "fastly",
+    "github", "grafana", "hackerone", "jetbrains", "kong", "launchdarkly",
+    "linear", "mattermost", "mongodb", "newrelic", "observable", "planetscale",
+    "prisma", "quickbooks", "replit", "sentry", "temporal", "vercel",
 ]
 
 # Lever public career pages
@@ -106,6 +116,20 @@ LEVER_COMPANIES = [
     "flexport",
     "coursera",
     "gusto",
+    # Extended list - 50+ additional companies
+    "coinbase", "airtable", "superhuman", "productboard", "webflow",
+    "figma", "discord", "postman", "notion", "asana", "zapier",
+    "segment", "loom", "intercom", "datadog", "hashicorp", "stripe",
+    "shopify", "slack", "snowflake", "twilio", "reddit", "pinterest",
+    "square", "dropbox", "airbnb", "robinhood", "canva", "instacart",
+    "yelp", "atlassian", "box", "cloudera", "databricks", "elastic",
+    "fastly", "github", "grafana", "hackerone", "jetbrains", "kong",
+    "launchdarkly", "linear", "mattermost", "newrelic", "observable",
+    "planetscale", "prisma", "quickbooks", "replit", "sentry",
+    "temporal", "vercel", "affirm", "benchling", "checkr", "chime",
+    "cloverhealth", "cruise", "ginkgo", "khanacademy", "lime", "medium",
+    "mixpanel", "mongodb", "okta", "opendoor", "pagerduty", "plaid",
+    "quora", "snap",
 ]
 
 # Workday company identifiers
