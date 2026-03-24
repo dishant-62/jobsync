@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import uuid
 import logging
 
@@ -56,8 +57,18 @@ async def list_jobs(
             skills=None,  # Skills filtering disabled for now
         )
         
+        logger.info(f"🔍 DEBUG: Total jobs in database: {total}")
+        logger.info(f"🔍 DEBUG: Request params - page: {page}, page_size: {page_size}, q: {q}, location: {location}, experience_level: {experience_level}, is_remote: {is_remote}")
+        
+        # Validate page number is within valid range
+        max_page = math.ceil(total / page_size) if total > 0 else 1
+        if page > max_page:
+            logger.warning(f"🔍 DEBUG: Requested page {page} exceeds maximum page {max_page}, adjusting to last page")
+            page = max_page
+        
         # Calculate offset from page and page_size
         offset = (page - 1) * page_size
+        logger.info(f"🔍 DEBUG: Calculated offset: {offset} (using page {page})")
         
         rows = await repo.search_jobs(
             q=q,
@@ -70,6 +81,7 @@ async def list_jobs(
         )
         
         logger.debug(f"Retrieved {len(rows)} jobs from database")
+        logger.info(f"🔍 DEBUG: Jobs retrieved for this page: {len(rows)}")
         
         # Convert ORM models to Pydantic models
         jobs = []
@@ -86,6 +98,7 @@ async def list_jobs(
         
         # Calculate if there are more pages
         has_more = (page * page_size) < total
+        logger.info(f"🔍 DEBUG: has_more calculated: {has_more} (page {page} * page_size {page_size} = {page * page_size} < total {total})")
         
         return JobListResponse(
             jobs=jobs, 

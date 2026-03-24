@@ -28,6 +28,8 @@ function JobsList() {
     setError(null)
 
     try {
+      console.log(`🔍 DEBUG: Fetching jobs - page: ${page}, page_size: ${pageSize}, q: "${searchQuery}", location: "${location}", experience_level: "${experienceLevel}", is_remote: ${isRemote}`)
+      
       const response = await jobApi.listJobs({
         q: searchQuery,
         location: location || undefined,
@@ -37,6 +39,9 @@ function JobsList() {
         page,
         page_size: pageSize,
       })
+      
+      console.log(`🔍 DEBUG: Response received - total: ${response.total}, jobs returned: ${response.jobs.length}, has_more: ${response.has_more}, page: ${response.page}, page_size: ${response.page_size}`)
+      
       setJobs(response.jobs)
       setTotal(response.total)
       setHasMore(response.has_more)
@@ -55,6 +60,7 @@ function JobsList() {
   }, [fetchJobs])
 
   const handleSearch = (query: string) => {
+    console.log(`🔍 DEBUG: Search changed to: "${query}" - resetting to page 1`)
     setSearchQuery(query)
     setPage(1) // Reset to first page
   }
@@ -65,11 +71,18 @@ function JobsList() {
     is_remote: boolean
     skills: string[]
   }) => {
+    console.log(`🔍 DEBUG: Filters changed - location: "${filters.location}", experience_level: "${filters.experience_level}", is_remote: ${filters.is_remote}, skills: [${filters.skills.join(', ')}] - resetting to page 1`)
     setLocation(filters.location)
     setExperienceLevel(filters.experience_level)
     setIsRemote(filters.is_remote)
     setSelectedSkills(filters.skills)
     setPage(1) // Reset to first page
+  }
+
+  const handlePageChange = (newPage: number) => {
+    console.log(`🔍 DEBUG: Page changed from ${page} to ${newPage}`)
+    setPage(newPage)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
@@ -101,6 +114,45 @@ function JobsList() {
           </div>
         )}
 
+        {/* Debug Info */}
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <h3 className="text-sm font-semibold text-yellow-800 mb-2">🔍 Debug Info</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <span className="font-medium text-yellow-700">Total Jobs:</span>
+              <span className="ml-2 text-yellow-900">{total}</span>
+            </div>
+            <div>
+              <span className="font-medium text-yellow-700">Loaded Jobs:</span>
+              <span className="ml-2 text-yellow-900">{jobs.length}</span>
+            </div>
+            <div>
+              <span className="font-medium text-yellow-700">Current Page:</span>
+              <span className="ml-2 text-yellow-900">{page}</span>
+            </div>
+            <div>
+              <span className="font-medium text-yellow-700">Total Pages:</span>
+              <span className="ml-2 text-yellow-900">{total > 0 ? Math.ceil(total / pageSize) : 0}</span>
+            </div>
+            <div>
+              <span className="font-medium text-yellow-700">Page Size:</span>
+              <span className="ml-2 text-yellow-900">{pageSize}</span>
+            </div>
+            <div>
+              <span className="font-medium text-yellow-700">Has More:</span>
+              <span className={`ml-2 ${hasMore ? 'text-green-600' : 'text-red-600'}`}>
+                {hasMore ? 'Yes' : 'No'}
+              </span>
+            </div>
+            <div>
+              <span className="font-medium text-yellow-700">Progress:</span>
+              <span className="ml-2 text-yellow-900">
+                {total > 0 ? `${Math.round((jobs.length / total) * 100)}%` : '0%'}
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Job List */}
         <JobList jobs={jobs} isLoading={isLoading} error={error} />
 
@@ -110,7 +162,7 @@ function JobsList() {
           page={page}
           pageSize={pageSize}
           hasMore={hasMore}
-          onPageChange={(newPage) => setPage(newPage)}
+          onPageChange={handlePageChange}
           isLoading={isLoading}
         />
       </main>
