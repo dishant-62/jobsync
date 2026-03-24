@@ -25,4 +25,7 @@ export interface Job {
 export interface JobListResponse {
   jobs: Job[]
   total: number
+  page: number
+  page_size: number
+  has_more: boolean
 }

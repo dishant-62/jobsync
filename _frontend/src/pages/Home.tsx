@@ -12,7 +12,7 @@ function Home() {
   useEffect(() => {
     const fetchFeaturedJobs = async () => {
       try {
-        const response = await jobApi.listJobs({ limit: 6 })
+        const response = await jobApi.listJobs({ page: 1, page_size: 6 })
         setFeaturedJobs(response.jobs)
       } catch (error) {
         console.error('Failed to fetch featured jobs:', error)

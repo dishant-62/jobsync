@@ -40,8 +40,8 @@ async def list_jobs(
         default=None,
         description="Comma-separated list of skills (filtering coming soon).",
     ),
-    limit: int = Query(default=_DEFAULT_LIMIT, ge=1, le=_MAX_LIMIT),
-    offset: int = Query(default=0, ge=0),
+    page: int = Query(default=1, ge=1, description="Page number (1-based)."),
+    page_size: int = Query(default=_DEFAULT_LIMIT, ge=1, le=_MAX_LIMIT, description="Number of items per page."),
 ) -> JobListResponse:
     """List jobs with optional text search, filters, and pagination."""
     try:
@@ -55,13 +55,17 @@ async def list_jobs(
             is_remote=is_remote,
             skills=None,  # Skills filtering disabled for now
         )
+        
+        # Calculate offset from page and page_size
+        offset = (page - 1) * page_size
+        
         rows = await repo.search_jobs(
             q=q,
             location=location,
             experience_level=experience_level,
             is_remote=is_remote,
             skills=None,  # Skills filtering disabled for now
-            limit=limit,
+            limit=page_size,  # Use page_size as limit
             offset=offset,
         )
         
@@ -80,7 +84,16 @@ async def list_jobs(
                     detail=f"Failed to serialize job: {str(e)}"
                 )
         
-        return JobListResponse(jobs=jobs, total=total)
+        # Calculate if there are more pages
+        has_more = (page * page_size) < total
+        
+        return JobListResponse(
+            jobs=jobs, 
+            total=total,
+            page=page,
+            page_size=page_size,
+            has_more=has_more
+        )
     
     except HTTPException:
         raise

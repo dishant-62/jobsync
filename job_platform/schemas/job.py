@@ -44,4 +44,7 @@ class JobListResponse(BaseModel):
     """Paginated job search results."""
 
     jobs: list[JobRead]
-    total: int = Field(..., ge=0, description="Total rows matching filters (ignoring limit/offset).")
+    total: int = Field(..., ge=0, description="Total rows matching filters (ignoring pagination).")
+    page: int = Field(..., ge=1, description="Current page number.")
+    page_size: int = Field(..., ge=1, description="Number of items per page.")
+    has_more: bool = Field(..., description="Whether there are more pages available.")

@@ -18,8 +18,9 @@ function JobsList() {
   const [experienceLevel, setExperienceLevel] = useState('')
   const [isRemote, setIsRemote] = useState(false)
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
-  const [limit] = useState(20)
-  const [offset, setOffset] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(20)
+  const [hasMore, setHasMore] = useState(false)
 
   // Fetch jobs on component mount and when filters/pagination changes
   const fetchJobs = useCallback(async () => {
@@ -33,11 +34,12 @@ function JobsList() {
         experience_level: experienceLevel || undefined,
         is_remote: isRemote ? true : undefined,
         skills: selectedSkills.length > 0 ? selectedSkills : undefined,
-        limit,
-        offset,
+        page,
+        page_size: pageSize,
       })
       setJobs(response.jobs)
       setTotal(response.total)
+      setHasMore(response.has_more)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch jobs'
       setError(errorMessage)
@@ -46,7 +48,7 @@ function JobsList() {
     } finally {
       setIsLoading(false)
     }
-  }, [searchQuery, location, experienceLevel, isRemote, selectedSkills, limit, offset])
+  }, [searchQuery, location, experienceLevel, isRemote, selectedSkills, page, pageSize])
 
   useEffect(() => {
     fetchJobs()
@@ -54,7 +56,7 @@ function JobsList() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
-    setOffset(0) // Reset to first page
+    setPage(1) // Reset to first page
   }
 
   const handleFiltersChange = (filters: {
@@ -67,12 +69,7 @@ function JobsList() {
     setExperienceLevel(filters.experience_level)
     setIsRemote(filters.is_remote)
     setSelectedSkills(filters.skills)
-    setOffset(0) // Reset to first page
-  }
-
-  const handlePageChange = (newOffset: number) => {
-    setOffset(newOffset)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setPage(1) // Reset to first page
   }
 
   return (
@@ -110,9 +107,10 @@ function JobsList() {
         {/* Pagination */}
         <Pagination
           total={total}
-          limit={limit}
-          offset={offset}
-          onPageChange={handlePageChange}
+          page={page}
+          pageSize={pageSize}
+          hasMore={hasMore}
+          onPageChange={(newPage) => setPage(newPage)}
           isLoading={isLoading}
         />
       </main>

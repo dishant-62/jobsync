@@ -15,8 +15,8 @@ export interface SearchFilters {
   experience_level?: string
   is_remote?: boolean
   skills?: string[]
-  limit?: number
-  offset?: number
+  page?: number
+  page_size?: number
 }
 
 export const jobApi = {
@@ -24,11 +24,11 @@ export const jobApi = {
    * Fetch all jobs with optional search, filters, and pagination
    */
   listJobs: async (filters: SearchFilters = {}): Promise<JobListResponse> => {
-    const { limit = 20, offset = 0, ...filterParams } = filters
+    const { page = 1, page_size = 20, ...filterParams } = filters
     
     const params: any = {
-      limit,
-      offset,
+      page,
+      page_size,
     }
 
     if (filterParams.q) params.q = filterParams.q
@@ -89,6 +89,12 @@ export const jobApi = {
    */
   getSavedJobs: async (): Promise<JobListResponse> => {
     const response = await client.get('/saved-jobs')
-    return { jobs: response.data, total: response.data.length }
+    return {
+      jobs: response.data,
+      total: response.data.length,
+      page: 1,
+      page_size: response.data.length,
+      has_more: false,
+    }
   },
 }
