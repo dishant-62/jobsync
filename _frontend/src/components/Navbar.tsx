@@ -17,6 +17,12 @@ export const Navbar = () => {
             >
               All Jobs
             </Link>
+            <Link
+              to="/saved"
+              className="btn-secondary"
+            >
+              ⭐ Saved Jobs
+            </Link>
           </div>
         </div>
       </div>

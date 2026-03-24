@@ -53,4 +53,42 @@ export const jobApi = {
     const response = await client.get(`/jobs/${jobId}`)
     return response.data
   },
+
+  /**
+   * Save a job for the current user
+   */
+  saveJob: async (jobId: string) => {
+    const response = await client.post(`/jobs/${jobId}/save`)
+    return response.data
+  },
+
+  /**
+   * Remove a saved job for the current user
+   */
+  unsaveJob: async (jobId: string) => {
+    await client.delete(`/jobs/${jobId}/save`)
+  },
+
+  /**
+   * Check if a job is saved by the current user
+   */
+  isJobSaved: async (jobId: string): Promise<boolean> => {
+    try {
+      await client.get(`/jobs/${jobId}/save`)
+      return true
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return false
+      }
+      throw error
+    }
+  },
+
+  /**
+   * Get all saved jobs for the current user
+   */
+  getSavedJobs: async (): Promise<JobListResponse> => {
+    const response = await client.get('/saved-jobs')
+    return { jobs: response.data, total: response.data.length }
+  },
 }

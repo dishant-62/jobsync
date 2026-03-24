@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import type { Job } from '../types'
+import { SaveButton } from './SaveButton'
 
 interface JobCardProps {
   job: Job
@@ -78,9 +79,10 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
         <span className="text-xs text-textSecondary">
           Posted: {postedDate}
         </span>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <SaveButton jobId={job.job_id} size="sm" />
           <Link
-            to={`/jobs/${job.id}`}
+            to={`/jobs/${job.job_id}`}
             className="btn-primary"
           >
             View Details

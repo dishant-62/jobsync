@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from job_platform.api.routes import jobs as jobs_routes
+from job_platform.api.routes import saved_jobs as saved_jobs_routes
 from job_platform.config import get_settings
 from job_platform.db.session import engine
 from job_platform.utils.logging import configure_logging, get_logger
@@ -66,6 +67,7 @@ def create_app() -> FastAPI:
 
     # Include job routes with /api/v1 prefix
     application.include_router(jobs_routes.router, prefix="/api/v1")
+    application.include_router(saved_jobs_routes.router, prefix="/api/v1")
 
     @application.get("/health", tags=["system"])
     async def health() -> dict[str, str]:

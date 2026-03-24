@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { jobApi } from '../api/client'
 import type { Job } from '../types'
 import { SkeletonLoader } from './SkeletonLoader'
+import { SaveButton } from './SaveButton'
 
 export const JobDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -103,9 +104,12 @@ export const JobDetail: React.FC = () => {
             {/* Header Section */}
             <div className="card p-8">
               {/* Title and Company */}
-              <div className="mb-6">
-                <h1 className="text-4xl font-bold text-textPrimary mb-2">{job.title}</h1>
-                <p className="text-xl text-primary font-semibold">{job.company.name}</p>
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex-1">
+                  <h1 className="text-4xl font-bold text-textPrimary mb-2">{job.title}</h1>
+                  <p className="text-xl text-primary font-semibold">{job.company.name}</p>
+                </div>
+                <SaveButton jobId={job.job_id} size="lg" />
               </div>
 
               {/* Meta Information */}
