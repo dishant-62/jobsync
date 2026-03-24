@@ -99,6 +99,7 @@ class JobRepository:
         salary_min: int | None = None,
         salary_max: int | None = None,
         is_remote: bool = False,
+        score: float = 0.0,
     ) -> tuple[Job, bool]:
         """Upsert a job by job_id. Returns (job, created) where created is True if inserted, False if updated."""
         # Use PostgreSQL ON CONFLICT to upsert
@@ -115,6 +116,7 @@ class JobRepository:
             salary_min=salary_min,
             salary_max=salary_max,
             is_remote=is_remote,
+            score=score,
         ).on_conflict_do_update(
             index_elements=["job_id"],
             set_={
@@ -128,6 +130,7 @@ class JobRepository:
                 "salary_min": salary_min,
                 "salary_max": salary_max,
                 "is_remote": is_remote,
+                "score": score,
             }
         ).returning(Job)
 
@@ -183,10 +186,10 @@ class JobRepository:
         where_clause = _job_search_conditions(q, location, experience_level, is_remote, skills)
         if where_clause is not None:
             stmt = stmt.where(where_clause)
-        stmt = stmt.order_by(Job.created_at.desc()).limit(limit).offset(offset)
+        stmt = stmt.order_by(Job.score.desc(), Job.created_at.desc()).limit(limit).offset(offset)
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 
     async def list_jobs(self) -> Sequence[Job]:
-        result = await self._session.execute(select(Job).order_by(Job.created_at.desc()))
+        result = await self._session.execute(select(Job).order_by(Job.score.desc(), Job.created_at.desc()))
         return result.scalars().all()

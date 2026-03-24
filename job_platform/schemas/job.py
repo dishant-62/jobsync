@@ -37,6 +37,7 @@ class JobRead(BaseModel):
     salary_min: int | None = None
     salary_max: int | None = None
     is_remote: bool = False
+    score: float
 
 
 class JobListResponse(BaseModel):

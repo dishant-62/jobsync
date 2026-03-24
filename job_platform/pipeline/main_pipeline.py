@@ -22,6 +22,7 @@ from job_platform.repositories.job import JobRepository
 from job_platform.scraper.unified_scraper import normalize_raw_job
 from job_platform.utils.job_id import generate_job_id
 from job_platform.utils.logging import configure_logging, get_logger
+from job_platform.utils.ranking import calculate_job_score
 
 logger = get_logger("job_platform.pipeline.main_pipeline")
 
@@ -197,7 +198,17 @@ async def process_single_job(
         location = _clip(str(final_job.location or ""), _MAX_LOCATION_LEN)
         description = str(final_job.description)
 
-        # Step 8: Upsert into database
+        # Step 8: Calculate job ranking score
+        score = calculate_job_score(
+            posted_date=posted_date,
+            salary_min=final_job.salary_min,
+            salary_max=final_job.salary_max,
+            is_remote=final_job.is_remote,
+            description=description,
+            skills=final_job.skills,
+        )
+
+        # Step 9: Upsert into database
         db_job, created = await job_repo.upsert_job(
             job_id=job_id,
             company_id=db_company.id,
@@ -211,6 +222,7 @@ async def process_single_job(
             salary_min=final_job.salary_min,
             salary_max=final_job.salary_max,
             is_remote=final_job.is_remote,
+            score=score,
         )
 
         if created:

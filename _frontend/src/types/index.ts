@@ -19,6 +19,7 @@ export interface Job {
   salary_min?: number | null
   salary_max?: number | null
   is_remote: boolean
+  score: number
 }
 
 export interface JobListResponse {
