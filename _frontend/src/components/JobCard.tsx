@@ -54,18 +54,18 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
       {/* Skills */}
       {job.skills && job.skills.length > 0 && (
         <div className="mb-4">
-          <p className="text-xs font-semibold text-gray-700 mb-2">Required Skills:</p>
+          <p className="text-xs font-semibold text-textPrimary mb-2">Required Skills:</p>
           <div className="flex flex-wrap gap-2">
             {job.skills.slice(0, 5).map((skill, index) => (
               <span
                 key={index}
-                className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                className="px-3 py-1 bg-primaryLight text-primary text-xs rounded-full"
               >
                 {skill}
               </span>
             ))}
             {job.skills.length > 5 && (
-              <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+              <span className="px-3 py-1 bg-card text-textSecondary text-xs rounded-full">
                 +{job.skills.length - 5} more
               </span>
             )}

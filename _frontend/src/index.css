@@ -17,24 +17,26 @@ body {
   @apply bg-background text-textPrimary;
 }
 
-/* Common application utilities */
-.btn-primary {
-  @apply bg-primary text-white rounded-lg px-4 py-2 font-semibold transition-colors duration-200 ease-in-out hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-70;
-}
+/* Custom utilities */
+@layer utilities {
+  .btn-primary {
+    @apply bg-primary text-white rounded-lg px-4 py-2 font-semibold transition-colors duration-200 ease-in-out hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-70;
+  }
 
-.card {
-  @apply bg-white border border-border shadow-soft rounded-xl;
-}
+  .card {
+    @apply bg-white border border-border shadow-soft rounded-xl;
+  }
 
-.input-base {
-  @apply border border-border rounded-lg bg-white text-textPrimary px-3 py-2 outline-none transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-primary;
-}
+  .input-base {
+    @apply border border-border rounded-lg bg-white text-textPrimary px-3 py-2 outline-none transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-primary;
+  }
 
-.text-secondary {
-  @apply text-textSecondary;
-}
+  .text-secondary {
+    @apply text-textSecondary;
+  }
 
-.bg-card {
-  @apply bg-white;
+  .bg-card {
+    @apply bg-white;
+  }
 }
 

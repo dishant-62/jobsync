@@ -49,7 +49,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           Previous
         </button>
 
-        <span className="px-4 py-2 text-sm text-gray-700">
+        <span className="px-4 py-2 text-sm text-textPrimary">
           Page {currentPage} of {totalPages}
         </span>
 

@@ -122,7 +122,7 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isL
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Location Filter */}
         <div>
-          <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="location" className="block text-sm font-medium text-textPrimary mb-2">
             📍 Location
           </label>
           <input
@@ -132,13 +132,13 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isL
             value={location}
             onChange={handleLocationChange}
             disabled={isLoading}
-            className="w-full input-base disabled:bg-gray-100"
+            className="w-full input-base disabled:bg-card"
           />
         </div>
 
         {/* Experience Level Filter */}
         <div>
-          <label htmlFor="experience" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="experience" className="block text-sm font-medium text-textPrimary mb-2">
             📊 Experience Level
           </label>
           <select
@@ -146,7 +146,7 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isL
             value={experienceLevel}
             onChange={handleExperienceLevelChange}
             disabled={isLoading}
-            className="w-full input-base disabled:bg-gray-100"
+            className="w-full input-base disabled:bg-card"
           >
             <option value="">All Levels</option>
             {EXPERIENCE_LEVELS.map((level) => (
@@ -165,7 +165,7 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isL
               checked={isRemote}
               onChange={handleRemoteToggle}
               disabled={isLoading}
-              className="w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary disabled:bg-gray-100 cursor-pointer"
+              className="w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary disabled:bg-card cursor-pointer"
             />
             <span className="ml-2 text-sm font-medium text-textPrimary">💻 Remote Only</span>
           </label>
@@ -173,17 +173,17 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isL
 
         {/* Skills Filter - Dropdown */}
         <div className="relative" ref={skillsDropdownRef}>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            🛠️ Skills <span className="text-xs text-gray-400">(coming soon)</span>
+          <label className="block text-sm font-medium text-textPrimary mb-2">
+            🛠️ Skills <span className="text-xs text-textSecondary">(coming soon)</span>
           </label>
           <button
             type="button"
             onClick={() => setShowSkillsDropdown(!showSkillsDropdown)}
             disabled={true}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-left bg-gray-100 hover:bg-gray-100 disabled:bg-gray-100 transition cursor-not-allowed"
+            className="w-full px-3 py-2 border border-border rounded-lg text-left bg-card hover:bg-card disabled:bg-card transition cursor-not-allowed"
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-textSecondary">
                 {selectedSkills.length > 0 ? `${selectedSkills.length} selected` : 'Skills filtering coming soon...'}
               </span>
               <span className={`text-xs transition-transform ${showSkillsDropdown ? 'rotate-180' : ''}`}>▼</span>
@@ -191,19 +191,19 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isL
           </button>
 
           {showSkillsDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-border rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto">
               {COMMON_SKILLS.map((skill) => (
                 <label
                   key={skill}
-                  className="flex items-center px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  className="flex items-center px-4 py-2 hover:bg-primaryLight cursor-pointer border-b border-border last:border-b-0"
                 >
                   <input
                     type="checkbox"
                     checked={selectedSkills.includes(skill)}
                     onChange={() => handleSkillToggle(skill)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    className="w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary cursor-pointer"
                   />
-                  <span className="ml-2 text-sm text-gray-700">{skill}</span>
+                  <span className="ml-2 text-sm text-textPrimary">{skill}</span>
                 </label>
               ))}
             </div>

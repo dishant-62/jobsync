@@ -150,9 +150,9 @@ export const JobDetail: React.FC = () => {
               </div>
 
               {salaryRange && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <p className="text-gray-600 text-sm font-medium mb-1">📅 Posted</p>
-                  <p className="text-gray-900 font-semibold">{postedDate}</p>
+                <div className="mt-6 pt-6 border-t border-border">
+                  <p className="text-textSecondary text-sm font-medium mb-1">📅 Posted</p>
+                  <p className="text-textPrimary font-semibold">{postedDate}</p>
                 </div>
               )}
             </div>
@@ -204,10 +204,10 @@ export const JobDetail: React.FC = () => {
             </div>
 
             {/* Additional Information */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-sm text-gray-700">
+            <div className="bg-primaryLight border border-primary rounded-lg p-6 text-sm text-textPrimary">
               <p>
                 <strong>Need help?</strong> Visit our{' '}
-                <a href="/" className="text-blue-600 hover:text-blue-800">
+                <a href="/" className="text-primary hover:text-primaryHover">
                   job listings
                 </a>{' '}
                 to find more opportunities or use our search and filters to narrow down your options.
@@ -218,8 +218,8 @@ export const JobDetail: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-600 text-sm">
+      <footer className="bg-white border-t border-border mt-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-textSecondary text-sm">
           <p>&copy; 2026 JobSync. All rights reserved.</p>
         </div>
       </footer>
