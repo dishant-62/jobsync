@@ -29,7 +29,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
   return (
     <div className="card p-6 hover:shadow-lg transition cursor-pointer">
       {/* Clickable header area */}
-      <Link to={`/jobs/${job.id}`} className="block hover:opacity-90 transition">
+      <Link to={`/jobs/${job.job_id}`} className="block hover:opacity-90 transition">
         <div className="mb-3">
           <h3 className="text-xl font-semibold text-textPrimary mb-1 hover:text-primary transition">
             {job.title}

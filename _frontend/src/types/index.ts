@@ -5,6 +5,7 @@ export interface Company {
 
 export interface Job {
   id: string
+  job_id: string
   company_id: string
   company: Company
   title: string

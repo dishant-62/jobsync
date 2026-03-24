@@ -23,6 +23,7 @@ class JobRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+    job_id: str
     company_id: uuid.UUID
     company: CompanyRead
     title: str

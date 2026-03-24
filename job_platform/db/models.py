@@ -41,6 +41,12 @@ class Job(Base):
         primary_key=True,
         default=uuid.uuid4,
     )
+    job_id: Mapped[str] = mapped_column(
+        String(64),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
     company_id: Mapped[uuid.UUID] = mapped_column(
         Uuid(as_uuid=True),
         ForeignKey("companies.id", ondelete="CASCADE"),

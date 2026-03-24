@@ -6,7 +6,8 @@ import uuid
 from collections.abc import Sequence
 from datetime import date
 
-from sqlalchemy import ColumnElement, and_, func, or_, select
+from sqlalchemy import ColumnElement, and_, func, or_, select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -83,12 +84,70 @@ class JobRepository:
         await self._session.refresh(job)
         return job
 
+    async def upsert_job(
+        self,
+        *,
+        job_id: str,
+        company_id: uuid.UUID,
+        title: str,
+        location: str,
+        description: str,
+        apply_url: str,
+        posted_date: date,
+        skills: list[str] | None = None,
+        experience_level: str | None = None,
+        salary_min: int | None = None,
+        salary_max: int | None = None,
+        is_remote: bool = False,
+    ) -> tuple[Job, bool]:
+        """Upsert a job by job_id. Returns (job, created) where created is True if inserted, False if updated."""
+        # Use PostgreSQL ON CONFLICT to upsert
+        stmt = insert(Job).values(
+            job_id=job_id,
+            company_id=company_id,
+            title=title,
+            location=location,
+            description=description,
+            apply_url=apply_url,
+            posted_date=posted_date,
+            skills=skills,
+            experience_level=experience_level,
+            salary_min=salary_min,
+            salary_max=salary_max,
+            is_remote=is_remote,
+        ).on_conflict_do_update(
+            index_elements=["job_id"],
+            set_={
+                "title": title,
+                "location": location,
+                "description": description,
+                "apply_url": apply_url,
+                "posted_date": posted_date,
+                "skills": skills,
+                "experience_level": experience_level,
+                "salary_min": salary_min,
+                "salary_max": salary_max,
+                "is_remote": is_remote,
+            }
+        ).returning(Job)
+
+        result = await self._session.execute(stmt)
+        job = result.scalar_one()
+        await self._session.refresh(job)
+        return job, result.rowcount > 0  # rowcount indicates if it was an insert vs update
+
     async def get_job_by_url(self, apply_url: str) -> Job | None:
         result = await self._session.execute(select(Job).where(Job.apply_url == apply_url))
         return result.scalar_one_or_none()
 
-    async def get_job_by_id(self, job_id: uuid.UUID) -> Job | None:
-        result = await self._session.execute(select(Job).where(Job.id == job_id))
+    async def get_job_by_id(self, job_id: str | uuid.UUID) -> Job | None:
+        """Get job by either job_id (string) or UUID id."""
+        if isinstance(job_id, str) and len(job_id) == 64:
+            # It's a job_id string
+            result = await self._session.execute(select(Job).where(Job.job_id == job_id))
+        else:
+            # It's a UUID
+            result = await self._session.execute(select(Job).where(Job.id == job_id))
         return result.scalar_one_or_none()
 
     async def count_jobs(

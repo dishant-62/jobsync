@@ -93,8 +93,8 @@ async def list_jobs(
 
 
 @router.get("/jobs/{job_id}", response_model=JobRead)
-async def get_job(job_id: uuid.UUID, repo: JobRepositoryDep) -> JobRead:
-    """Return a single job by id."""
+async def get_job(job_id: str, repo: JobRepositoryDep) -> JobRead:
+    """Return a single job by id (UUID or job_id string)."""
     job = await repo.get_job_by_id(job_id)
     if job is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")

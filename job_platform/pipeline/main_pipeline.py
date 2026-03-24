@@ -20,6 +20,7 @@ from job_platform.parser.job_parser import parse_job_description
 from job_platform.repositories.company import CompanyRepository
 from job_platform.repositories.job import JobRepository
 from job_platform.scraper.unified_scraper import normalize_raw_job
+from job_platform.utils.job_id import generate_job_id
 from job_platform.utils.logging import configure_logging, get_logger
 
 logger = get_logger("job_platform.pipeline.main_pipeline")
@@ -173,29 +174,12 @@ async def process_single_job(
         final_job_data = {**raw_job.model_dump(), **parsed_info.model_dump()}
         final_job = FinalJob(**final_job_data)
 
-        # Step 4: Check for duplicates
+        # Step 4: Generate deterministic job_id
         apply_url = str(final_job.apply_url)
         apply_url = _clip(apply_url, _MAX_APPLY_URL_LEN)
-
-        existing = await job_repo.get_job_by_url(apply_url)
-        if existing is not None:
-            logger.info(
-                "job_duplicate_found",
-                source=source_name,
-                title=final_job.title,
-                apply_url=apply_url
-            )
-            return JobProcessingResult(
-                source_name=source_name,
-                job_title=final_job.title,
-                raw_normalized=True,
-                parsed_success=parsed_success,
-                inserted=False,
-                duplicate=True
-            )
+        job_id = generate_job_id(identifier, apply_url)
 
         # Step 5: Get or create company
-        identifier = source_name
         db_company = await company_repo.get_or_create_for_source(
             source_type=source_type,
             identifier=identifier,
@@ -213,8 +197,9 @@ async def process_single_job(
         location = _clip(str(final_job.location or ""), _MAX_LOCATION_LEN)
         description = str(final_job.description)
 
-        # Step 8: Insert into database
-        await job_repo.create_job(
+        # Step 8: Upsert into database
+        db_job, created = await job_repo.upsert_job(
+            job_id=job_id,
             company_id=db_company.id,
             title=title,
             location=location,
@@ -228,23 +213,34 @@ async def process_single_job(
             is_remote=final_job.is_remote,
         )
 
-        logger.info(
-            "job_inserted_success",
-            source=source_name,
-            title=final_job.title,
-            job_id=str(db_company.id),
-            skills_count=len(final_job.skills or []),
-            experience_level=final_job.experience_level,
-            is_remote=final_job.is_remote
-        )
+        if created:
+            logger.info(
+                "job_inserted_success",
+                source=source_name,
+                title=final_job.title,
+                job_id=job_id,
+                skills_count=len(final_job.skills or []),
+                experience_level=final_job.experience_level,
+                is_remote=final_job.is_remote
+            )
+        else:
+            logger.info(
+                "job_updated_success",
+                source=source_name,
+                title=final_job.title,
+                job_id=job_id,
+                skills_count=len(final_job.skills or []),
+                experience_level=final_job.experience_level,
+                is_remote=final_job.is_remote
+            )
 
         return JobProcessingResult(
             source_name=source_name,
             job_title=final_job.title,
             raw_normalized=True,
             parsed_success=parsed_success,
-            inserted=True,
-            duplicate=False
+            inserted=created,
+            duplicate=not created
         )
 
     except Exception as e:

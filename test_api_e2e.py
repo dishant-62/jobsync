@@ -42,6 +42,7 @@ async def test_database_and_api():
             # Create a job
             job = Job(
                 id=uuid.uuid4(),
+                job_id="test_job_id_1234567890123456789012345678901234567890",  # 64 char job_id
                 company_id=company.id,
                 title="Senior Python Developer",
                 location="San Francisco, CA",
@@ -80,11 +81,23 @@ async def test_database_and_api():
             if jobs:
                 job = jobs[0]
                 print(f"      - Job ID: {job.id}")
+                print(f"      - Job ID (deterministic): {job.job_id}")
                 print(f"      - Title: {job.title}")
                 print(f"      - Company ID: {job.company_id}")
                 print(f"      - Company object exists: {job.company is not None}")
                 if job.company:
                     print(f"      - Company name: {job.company.name}")
+            
+            # Test get_job_by_id with UUID
+            if jobs:
+                job = jobs[0]
+                retrieved_job = await repo.get_job_by_id(job.id)
+                print(f"   ✅ Retrieved job by UUID: {retrieved_job is not None}")
+                
+                # Test get_job_by_id with job_id string
+                retrieved_job_by_job_id = await repo.get_job_by_id(job.job_id)
+                print(f"   ✅ Retrieved job by job_id: {retrieved_job_by_job_id is not None}")
+                print(f"   ✅ Same job retrieved: {retrieved_job.id == retrieved_job_by_job_id.id}")
         
         # Step 4: Test Pydantic serialization
         print("\n4️⃣  Testing Pydantic serialization...")
