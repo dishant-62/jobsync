@@ -101,6 +101,23 @@ class BaseCrawler(ABC):
 
     def _validate_normalized_job(self, job: NormalizedJob) -> bool:
         """
+        Validate a normalized job object.
+        
+        Only requires title and apply_url - salary and skills are optional.
+        
+        Args:
+            job: Normalized job to validate
+            
+        Returns:
+            True if job is valid, False otherwise
+        """
+        return (
+            bool(job.title and job.title.strip()) and
+            bool(job.apply_url and job.apply_url.strip())
+        )
+
+    def _validate_normalized_job(self, job: NormalizedJob) -> bool:
+        """
         Validate that a normalized job has all required fields.
         
         Returns:

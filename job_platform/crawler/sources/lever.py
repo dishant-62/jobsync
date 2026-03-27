@@ -49,10 +49,22 @@ async def _get_jobs_json(
         try:
             response = await client.get(url, params=params)
             response.raise_for_status()
-            payload = response.json()
-            if not isinstance(payload, dict):
-                raise ValueError("API returned non-object JSON root")
-            return payload
+            
+            # Check if response is JSON
+            try:
+                payload = response.json()
+                if not isinstance(payload, dict):
+                    raise ValueError("API returned non-object JSON root")
+                return payload
+            except ValueError:
+                # Response is not JSON (probably HTML error page)
+                # Treat as 404 - company doesn't exist on Lever
+                raise httpx.HTTPStatusError(
+                    "Not JSON response (likely 404 page)", 
+                    request=response.request, 
+                    response=response
+                )
+                
         except httpx.HTTPStatusError as exc:
             last_error = exc
             if not _should_retry_status(exc.response.status_code):
@@ -95,7 +107,23 @@ class LeverCrawler(BaseCrawler):
         url = f"{LEVER_API_URL}/{token}"
         params = {"mode": "json"}
 
-        payload = await _get_jobs_json(client, url, params)
+        try:
+            payload = await _get_jobs_json(client, url, params)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                # Company doesn't exist on Lever - return empty list
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Company {token} not found on Lever (404)")
+                return []
+            raise
+        except Exception as e:
+            # Log other errors but don't fail the entire crawl
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to fetch from Lever {token}: {e}")
+            return []
+
         jobs_raw = payload.get("postings")
         if not isinstance(jobs_raw, list):
             return []
