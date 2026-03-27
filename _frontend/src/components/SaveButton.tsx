@@ -40,12 +40,10 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
       if (isSaved) {
         await jobApi.unsaveJob(jobId)
         setIsSaved(false)
-        // Show toast notification
         showToast('Job removed from saved jobs', 'success')
       } else {
         await jobApi.saveJob(jobId)
         setIsSaved(true)
-        // Show toast notification
         showToast('Job saved successfully!', 'success')
       }
     } catch (error: any) {
@@ -60,7 +58,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
   const showToast = (message: string, type: 'success' | 'error') => {
     // Simple toast implementation - in a real app you'd use a proper toast library
     const toast = document.createElement('div')
-    toast.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white text-sm font-medium ${
+    toast.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white text-sm font-medium shadow-lg ${
       type === 'success' ? 'bg-green-500' : 'bg-red-500'
     }`
     toast.textContent = message
@@ -86,10 +84,10 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
   if (isChecking) {
     return (
       <button
-        className={`flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors ${sizeClasses[size]} ${className}`}
+        className={`flex items-center justify-center rounded-full bg-gray-100 transition-colors ${sizeClasses[size]} ${className}`}
         disabled
       >
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
       </button>
     )
   }
@@ -98,10 +96,10 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
     <button
       onClick={handleToggleSave}
       disabled={isLoading}
-      className={`flex items-center justify-center rounded-full transition-colors ${
+      className={`flex items-center justify-center rounded-full transition-all duration-200 ${
         isSaved
-          ? 'bg-yellow-100 hover:bg-yellow-200 text-yellow-600'
-          : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+          ? 'bg-yellow-100 hover:bg-yellow-200 text-yellow-600 shadow-sm'
+          : 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:shadow-sm'
       } ${sizeClasses[size]} ${className}`}
       title={isSaved ? 'Remove from saved jobs' : 'Save job'}
     >

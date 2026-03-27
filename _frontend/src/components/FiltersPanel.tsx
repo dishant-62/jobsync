@@ -12,22 +12,8 @@ interface FiltersPanelProps {
 
 const EXPERIENCE_LEVELS = ['Entry Level', 'Mid Level', 'Senior', 'Lead', 'Executive']
 const COMMON_SKILLS = [
-  'JavaScript',
-  'Python',
-  'React',
-  'TypeScript',
-  'Node.js',
-  'SQL',
-  'AWS',
-  'Docker',
-  'Kubernetes',
-  'Java',
-  'Go',
-  'Rust',
-  'Vue.js',
-  'Angular',
-  'C++',
-  'C#',
+  'JavaScript', 'Python', 'React', 'TypeScript', 'Node.js', 'SQL', 'AWS', 'Docker',
+  'Kubernetes', 'Java', 'Go', 'Rust', 'Vue.js', 'Angular', 'C++', 'C#'
 ]
 
 export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isLoading = false }) => {
@@ -104,49 +90,43 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isL
   const hasActiveFilters = location || experienceLevel || isRemote || selectedSkills.length > 0
 
   return (
-    <div className="mb-6 card p-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-4">
       {/* Filters Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-textPrimary">🔽 Filters</h3>
+        <h3 className="text-sm font-semibold text-gray-900">Filters</h3>
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="text-sm text-primary hover:text-primaryHover font-medium disabled:text-textSecondary"
+            className="text-xs text-blue-600 hover:text-blue-700 font-medium disabled:text-gray-400"
             disabled={isLoading}
           >
-            Clear All
+            Clear all
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="space-y-4">
         {/* Location Filter */}
         <div>
-          <label htmlFor="location" className="block text-sm font-medium text-textPrimary mb-2">
-            📍 Location
-          </label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Location</label>
           <input
-            id="location"
             type="text"
             placeholder="e.g., San Francisco"
             value={location}
             onChange={handleLocationChange}
             disabled={isLoading}
-            className="w-full input-base disabled:bg-card"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
           />
         </div>
 
         {/* Experience Level Filter */}
         <div>
-          <label htmlFor="experience" className="block text-sm font-medium text-textPrimary mb-2">
-            📊 Experience Level
-          </label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Experience Level</label>
           <select
-            id="experience"
             value={experienceLevel}
             onChange={handleExperienceLevelChange}
             disabled={isLoading}
-            className="w-full input-base disabled:bg-card"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
           >
             <option value="">All Levels</option>
             {EXPERIENCE_LEVELS.map((level) => (
@@ -158,58 +138,109 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ onFiltersChange, isL
         </div>
 
         {/* Remote Checkbox */}
-        <div className="flex items-end pb-2">
-          <label className="flex items-center cursor-pointer">
+        <div>
+          <label className="flex items-center">
             <input
               type="checkbox"
               checked={isRemote}
               onChange={handleRemoteToggle}
               disabled={isLoading}
-              className="w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary disabled:bg-card cursor-pointer"
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:bg-gray-100"
             />
-            <span className="ml-2 text-sm font-medium text-textPrimary">💻 Remote Only</span>
+            <span className="ml-2 text-sm text-gray-700">Remote work</span>
           </label>
         </div>
 
-        {/* Skills Filter - Dropdown */}
+        {/* Skills Filter */}
         <div className="relative" ref={skillsDropdownRef}>
-          <label className="block text-sm font-medium text-textPrimary mb-2">
-            🛠️ Skills <span className="text-xs text-textSecondary">(coming soon)</span>
-          </label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Skills</label>
           <button
             type="button"
             onClick={() => setShowSkillsDropdown(!showSkillsDropdown)}
-            disabled={true}
-            className="w-full px-3 py-2 border border-border rounded-lg text-left bg-card hover:bg-card disabled:bg-card transition cursor-not-allowed"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-left bg-white hover:bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm text-textSecondary">
-                {selectedSkills.length > 0 ? `${selectedSkills.length} selected` : 'Skills filtering coming soon...'}
+              <span className={selectedSkills.length > 0 ? 'text-gray-900' : 'text-gray-500'}>
+                {selectedSkills.length > 0 ? `${selectedSkills.length} selected` : 'Select skills'}
               </span>
-              <span className={`text-xs transition-transform ${showSkillsDropdown ? 'rotate-180' : ''}`}>▼</span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${showSkillsDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
           </button>
 
           {showSkillsDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-border rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-20 max-h-48 overflow-y-auto">
               {COMMON_SKILLS.map((skill) => (
                 <label
                   key={skill}
-                  className="flex items-center px-4 py-2 hover:bg-primaryLight cursor-pointer border-b border-border last:border-b-0"
+                  className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
                 >
                   <input
                     type="checkbox"
                     checked={selectedSkills.includes(skill)}
                     onChange={() => handleSkillToggle(skill)}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary cursor-pointer"
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <span className="ml-2 text-sm text-textPrimary">{skill}</span>
+                  <span className="ml-2 text-gray-700">{skill}</span>
                 </label>
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Active Filters Summary */}
+      {hasActiveFilters && (
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="flex flex-wrap gap-2">
+            {location && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                📍 {location}
+                <button
+                  onClick={() => handleLocationChange({ target: { value: '' } } as any)}
+                  className="ml-1 hover:text-blue-600"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {experienceLevel && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                📊 {experienceLevel}
+                <button
+                  onClick={() => handleExperienceLevelChange({ target: { value: '' } } as any)}
+                  className="ml-1 hover:text-blue-600"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {isRemote && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                💻 Remote
+                <button
+                  onClick={() => handleRemoteToggle({ target: { checked: false } } as any)}
+                  className="ml-1 hover:text-green-600"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {selectedSkills.map((skill) => (
+              <span key={skill} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                🛠️ {skill}
+                <button
+                  onClick={() => handleSkillToggle(skill)}
+                  className="ml-1 hover:text-purple-600"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

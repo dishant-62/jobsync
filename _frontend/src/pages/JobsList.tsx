@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { SearchBar } from '../components/SearchBar'
 import { FiltersPanel } from '../components/FiltersPanel'
 import { JobList } from '../components/JobList'
-import { Pagination } from '../components/Pagination'
+import { JobDetail } from '../components/JobDetail'
 import { jobApi } from '../api/client'
 import type { Job } from '../types'
 
 function JobsList() {
   const [jobs, setJobs] = useState<Job[]>([])
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +30,7 @@ function JobsList() {
 
     try {
       console.log(`🔍 DEBUG: Fetching jobs - page: ${page}, page_size: ${pageSize}, q: "${searchQuery}", location: "${location}", experience_level: "${experienceLevel}", is_remote: ${isRemote}`)
-      
+
       const response = await jobApi.listJobs({
         q: searchQuery,
         location: location || undefined,
@@ -39,12 +40,17 @@ function JobsList() {
         page,
         page_size: pageSize,
       })
-      
+
       console.log(`🔍 DEBUG: Response received - total: ${response.total}, jobs returned: ${response.jobs.length}, has_more: ${response.has_more}, page: ${response.page}, page_size: ${response.page_size}`)
-      
+
       setJobs(response.jobs)
       setTotal(response.total)
       setHasMore(response.has_more)
+
+      // Auto-select first job if none selected and jobs exist
+      if (response.jobs.length > 0 && !selectedJob) {
+        setSelectedJob(response.jobs[0])
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch jobs'
       setError(errorMessage)
@@ -53,7 +59,7 @@ function JobsList() {
     } finally {
       setIsLoading(false)
     }
-  }, [searchQuery, location, experienceLevel, isRemote, selectedSkills, page, pageSize])
+  }, [searchQuery, location, experienceLevel, isRemote, selectedSkills, page, pageSize, selectedJob])
 
   useEffect(() => {
     fetchJobs()
@@ -63,6 +69,7 @@ function JobsList() {
     console.log(`🔍 DEBUG: Search changed to: "${query}" - resetting to page 1`)
     setSearchQuery(query)
     setPage(1) // Reset to first page
+    setSelectedJob(null) // Clear selected job
   }
 
   const handleFiltersChange = (filters: {
@@ -77,104 +84,125 @@ function JobsList() {
     setIsRemote(filters.is_remote)
     setSelectedSkills(filters.skills)
     setPage(1) // Reset to first page
+    setSelectedJob(null) // Clear selected job
+  }
+
+  const handleJobSelect = (job: Job) => {
+    setSelectedJob(job)
   }
 
   const handlePageChange = (newPage: number) => {
     console.log(`🔍 DEBUG: Page changed from ${page} to ${newPage}`)
     setPage(newPage)
+    setSelectedJob(null) // Clear selected job
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-textPrimary">
-              💼 JobSync
-            </h1>
-            <p className="text-textSecondary mt-1">Discover your next opportunity</p>
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                💼 JobSync
+              </h1>
+              <p className="text-gray-600 text-sm">Discover your next opportunity</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-gray-500">
+                {total > 0 && (
+                  <span>{total.toLocaleString()} jobs found</span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Search Bar */}
-        <SearchBar onSearch={handleSearch} isLoading={isLoading} />
-
-        {/* Filters Panel */}
-        <FiltersPanel onFiltersChange={handleFiltersChange} isLoading={isLoading} />
-
-        {/* Job Count */}
-        {total > 0 && (
-          <div className="mb-4 text-sm text-textSecondary">
-            Found <span className="font-semibold text-textPrimary">{total}</span> job(s)
-          </div>
-        )}
-
-        {/* Debug Info */}
-        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <h3 className="text-sm font-semibold text-yellow-800 mb-2">🔍 Debug Info</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <span className="font-medium text-yellow-700">Total Jobs:</span>
-              <span className="ml-2 text-yellow-900">{total}</span>
+      {/* Search and Filters Bar */}
+      <div className="bg-white border-b border-gray-200 sticky top-16 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <SearchBar onSearch={handleSearch} isLoading={isLoading} />
             </div>
-            <div>
-              <span className="font-medium text-yellow-700">Loaded Jobs:</span>
-              <span className="ml-2 text-yellow-900">{jobs.length}</span>
-            </div>
-            <div>
-              <span className="font-medium text-yellow-700">Current Page:</span>
-              <span className="ml-2 text-yellow-900">{page}</span>
-            </div>
-            <div>
-              <span className="font-medium text-yellow-700">Total Pages:</span>
-              <span className="ml-2 text-yellow-900">{total > 0 ? Math.ceil(total / pageSize) : 0}</span>
-            </div>
-            <div>
-              <span className="font-medium text-yellow-700">Page Size:</span>
-              <span className="ml-2 text-yellow-900">{pageSize}</span>
-            </div>
-            <div>
-              <span className="font-medium text-yellow-700">Has More:</span>
-              <span className={`ml-2 ${hasMore ? 'text-green-600' : 'text-red-600'}`}>
-                {hasMore ? 'Yes' : 'No'}
-              </span>
-            </div>
-            <div>
-              <span className="font-medium text-yellow-700">Progress:</span>
-              <span className="ml-2 text-yellow-900">
-                {total > 0 ? `${Math.round((jobs.length / total) * 100)}%` : '0%'}
-              </span>
+            <div className="lg:w-80">
+              <FiltersPanel onFiltersChange={handleFiltersChange} isLoading={isLoading} />
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Job List */}
-        <JobList jobs={jobs} isLoading={isLoading} error={error} />
+      {/* Main Content - Split Screen Layout */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex gap-6 h-[calc(100vh-200px)]">
+          {/* Left Panel - Job List (35%) */}
+          <div className="w-full lg:w-2/5 xl:w-2/5 flex flex-col">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex-1 overflow-hidden">
+              <div className="p-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Jobs {total > 0 && <span className="text-gray-500 font-normal">({total.toLocaleString()})</span>}
+                </h2>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                <JobList
+                  jobs={jobs}
+                  isLoading={isLoading}
+                  error={error}
+                  selectedJob={selectedJob}
+                  onJobSelect={handleJobSelect}
+                  onPageChange={handlePageChange}
+                  total={total}
+                  page={page}
+                  pageSize={pageSize}
+                  hasMore={hasMore}
+                />
+              </div>
+            </div>
+          </div>
 
-        {/* Pagination */}
-        <Pagination
-          total={total}
-          page={page}
-          pageSize={pageSize}
-          hasMore={hasMore}
-          onPageChange={handlePageChange}
-          isLoading={isLoading}
-        />
+          {/* Right Panel - Job Details (65%) */}
+          <div className="hidden lg:block lg:w-3/5 xl:w-3/5">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full overflow-hidden">
+              {selectedJob ? (
+                <JobDetail job={selectedJob} isEmbedded={true} />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">💼</div>
+                    <h3 className="text-xl font-medium mb-2">Select a job to view details</h3>
+                    <p className="text-gray-400">Choose a job from the list to see full information</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-border mt-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <p className="text-center text-textSecondary text-sm">
-            © 2026 JobSync. Powered by the JobSync Platform API.
-          </p>
+      {/* Mobile Job Detail Modal/Overlay */}
+      {selectedJob && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Job Details</h2>
+              <button
+                onClick={() => setSelectedJob(null)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+              <JobDetail job={selectedJob} isEmbedded={true} />
+            </div>
+          </div>
         </div>
-      </footer>
+      )}
     </div>
   )
 }

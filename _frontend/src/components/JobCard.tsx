@@ -1,20 +1,20 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
 import type { Job } from '../types'
 import { SaveButton } from './SaveButton'
 
 interface JobCardProps {
   job: Job
+  isSelected?: boolean
+  onClick?: () => void
 }
 
-export const JobCard: React.FC<JobCardProps> = ({ job }) => {
+export const JobCard: React.FC<JobCardProps> = ({ job, isSelected = false, onClick }) => {
   const postedDate = new Date(job.posted_date).toLocaleDateString('en-US', {
-    year: 'numeric',
     month: 'short',
     day: 'numeric',
   })
 
-  const truncateDescription = (text: string, length: number = 200) => {
+  const truncateDescription = (text: string, length: number = 120) => {
     return text.length > length ? text.substring(0, length) + '...' : text
   }
 
@@ -28,46 +28,73 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
   const salaryRange = formatSalary(job.salary_min ?? undefined, job.salary_max ?? undefined)
 
   return (
-    <div className="card p-6 hover:shadow-lg transition cursor-pointer">
-      {/* Clickable header area */}
-      <Link to={`/jobs/${job.job_id}`} className="block hover:opacity-90 transition">
-        <div className="mb-3">
-          <h3 className="text-xl font-semibold text-textPrimary mb-1 hover:text-primary transition">
+    <div
+      className={`p-4 cursor-pointer transition-all duration-200 hover:bg-gray-50 ${
+        isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : 'border-l-4 border-transparent'
+      }`}
+      onClick={onClick}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate hover:text-blue-600 transition-colors">
             {job.title}
           </h3>
-          <p className="text-base text-primary font-medium">{job.company.name}</p>
+          <p className="text-base text-blue-600 font-medium truncate">{job.company.name}</p>
         </div>
-
-        {/* Location and Meta Info */}
-        <div className="flex flex-wrap gap-3 mb-4 text-sm text-textSecondary">
-          <span>📍 {job.location}</span>
-          {job.is_remote && <span>💻 Remote</span>}
-          {job.experience_level && <span>📊 {job.experience_level}</span>}
-          {salaryRange && <span>💰 {salaryRange}</span>}
+        <div className="flex items-center space-x-2 ml-4">
+          <SaveButton jobId={job.job_id} size="sm" />
+          {isSelected && (
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+          )}
         </div>
+      </div>
 
-        {/* Description */}
-        <p className="text-textPrimary text-sm mb-4">
-          {truncateDescription(job.description)}
-        </p>
-      </Link>
+      {/* Location and Meta Info */}
+      <div className="flex flex-wrap items-center gap-3 mb-3 text-sm text-gray-600">
+        <span className="flex items-center">
+          <span className="mr-1">📍</span>
+          {job.location}
+        </span>
+        {job.is_remote && (
+          <span className="flex items-center text-green-600">
+            <span className="mr-1">💻</span>
+            Remote
+          </span>
+        )}
+        {job.experience_level && (
+          <span className="flex items-center">
+            <span className="mr-1">📊</span>
+            {job.experience_level}
+          </span>
+        )}
+        {salaryRange && (
+          <span className="flex items-center text-green-600 font-medium">
+            <span className="mr-1">💰</span>
+            {salaryRange}
+          </span>
+        )}
+      </div>
+
+      {/* Description */}
+      <p className="text-gray-700 text-sm mb-3 leading-relaxed">
+        {truncateDescription(job.description)}
+      </p>
 
       {/* Skills */}
       {job.skills && job.skills.length > 0 && (
-        <div className="mb-4">
-          <p className="text-xs font-semibold text-textPrimary mb-2">Required Skills:</p>
-          <div className="flex flex-wrap gap-2">
-            {job.skills.slice(0, 5).map((skill, index) => (
+        <div className="mb-3">
+          <div className="flex flex-wrap gap-1">
+            {job.skills.slice(0, 3).map((skill, index) => (
               <span
                 key={index}
-                className="px-3 py-1 bg-primaryLight text-primary text-xs rounded-full"
+                className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md font-medium"
               >
                 {skill}
               </span>
             ))}
-            {job.skills.length > 5 && (
-              <span className="px-3 py-1 bg-card text-textSecondary text-xs rounded-full">
-                +{job.skills.length - 5} more
+            {job.skills.length > 3 && (
+              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md">
+                +{job.skills.length - 3}
               </span>
             )}
           </div>
@@ -75,26 +102,11 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-textSecondary">
-          Posted: {postedDate}
-        </span>
-        <div className="flex items-center gap-2">
-          <SaveButton jobId={job.job_id} size="sm" />
-          <Link
-            to={`/jobs/${job.job_id}`}
-            className="btn-primary"
-          >
-            View Details
-          </Link>
-          <a
-            href={job.apply_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary bg-success hover:bg-green-700"
-          >
-            Apply Now
-          </a>
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        <span>Posted {postedDate}</span>
+        <div className="flex items-center space-x-2">
+          <span className="text-gray-400">•</span>
+          <span>Match: {Math.round(job.score * 100)}%</span>
         </div>
       </div>
     </div>
