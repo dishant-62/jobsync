@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Add job_id column as unique VARCHAR(64) for SHA256 hash
-    op.add_column("jobs", sa.Column("job_id", sa.String(64), unique=True, nullable=False))
+    op.add_column("jobs", sa.Column("job_id", sa.String(64), unique=True, nullable=True))
 
     # Create index for job_id lookups
     op.create_index("ix_jobs_job_id", "jobs", ["job_id"])

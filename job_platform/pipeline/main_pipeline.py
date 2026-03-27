@@ -101,15 +101,14 @@ class PipelineRunResult:
 async def process_single_job(
     raw_job_data: dict[str, Any],
     source_name: str,
-    source_type: str,
-    company_repo: CompanyRepository,
+    source_type: str,    source_identifier: str,    company_repo: CompanyRepository,
     job_repo: JobRepository,
 ) -> JobProcessingResult:
     """
     Process a single job through the complete pipeline: scraper → parser → DB.
 
     Args:
-        raw_job_data: Raw job data from crawler
+        raw_job_data: Raw job data from crawler (dict or NormalizedJob)
         source_name: Name of the source
         source_type: Type of the source
         company_repo: Company repository
@@ -118,11 +117,19 @@ async def process_single_job(
     Returns:
         Result of job processing
     """
-    job_title = raw_job_data.get("title", "Unknown Title")
+    # Handle both dict and NormalizedJob objects
+    if hasattr(raw_job_data, 'to_dict'):
+        # It's a NormalizedJob object
+        job_dict = raw_job_data.to_dict()
+        job_title = raw_job_data.title
+    else:
+        # It's already a dict
+        job_dict = raw_job_data
+        job_title = job_dict.get("title", "Unknown Title")
 
     try:
         # Step 1: Normalize raw job data using unified scraper
-        raw_job = await normalize_raw_job(raw_job_data, source_type)
+        raw_job = await normalize_raw_job(job_dict, source_type)
 
         if raw_job is None:
             logger.warning(
@@ -178,12 +185,12 @@ async def process_single_job(
         # Step 4: Generate deterministic job_id
         apply_url = str(final_job.apply_url)
         apply_url = _clip(apply_url, _MAX_APPLY_URL_LEN)
-        job_id = generate_job_id(identifier, apply_url)
+        job_id = generate_job_id(source_identifier, apply_url)
 
         # Step 5: Get or create company
         db_company = await company_repo.get_or_create_for_source(
             source_type=source_type,
-            identifier=identifier,
+            identifier=source_identifier,
             display_name=source_name,
         )
 
@@ -333,7 +340,7 @@ async def process_source_jobs(
 
             for raw_job_data in raw_jobs:
                 result = await process_single_job(
-                    raw_job_data, source.name, source.source_type,
+                    raw_job_data, source.name, source.source_type, source.company or source.url or source.name,
                     company_repo, job_repo
                 )
                 job_results.append(result)

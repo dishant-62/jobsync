@@ -24,10 +24,12 @@ from job_platform.crawler.sources.config import (
     save_failed_sources_to_file
 )
 from job_platform.pipeline.main_pipeline import run_main_pipeline
+from job_platform.config import get_settings
 from job_platform.utils.logging import configure_logging, get_logger
 
 # Configure logging
-configure_logging()
+settings = get_settings()
+configure_logging(log_level=settings.log_level, json_logs=settings.json_logs)
 logger = get_logger("job_platform.extended_crawler")
 
 async def run_extended_crawler():
@@ -43,7 +45,8 @@ async def run_extended_crawler():
             total_sources=len(all_sources),
         )
 
-        print("🚀 Starting Extended Job Crawler with Validation"        print(f"📊 Total Sources: {len(all_sources)}")
+        print("🚀 Starting Extended Job Crawler with Validation")
+        print(f"📊 Total Sources: {len(all_sources)}")
         print()
 
     except Exception as e:
@@ -110,7 +113,8 @@ async def run_extended_crawler():
         )
 
         # Print comprehensive summary
-        print("📈 FINAL SUMMARY"        print("=" * 60)
+        print("📈 FINAL SUMMARY")
+        print("=" * 60)
         print(f"Total Companies Configured:  {len(all_sources)}")
         print(f"Active Sources Validated:    {len(active_sources)}")
         print(f"Failed Sources:              {len(failed_results)}")

@@ -102,6 +102,10 @@ class JobRepository:
         score: float = 0.0,
     ) -> tuple[Job, bool]:
         """Upsert a job by job_id. Returns (job, created) where created is True if inserted, False if updated."""
+        # Check if job exists before upsert
+        existing = await self.get_job_by_id(job_id)
+        was_created = existing is None
+        
         # Use PostgreSQL ON CONFLICT to upsert
         stmt = insert(Job).values(
             job_id=job_id,
@@ -136,8 +140,7 @@ class JobRepository:
 
         result = await self._session.execute(stmt)
         job = result.scalar_one()
-        await self._session.refresh(job)
-        return job, result.rowcount > 0  # rowcount indicates if it was an insert vs update
+        return job, was_created
 
     async def get_job_by_url(self, apply_url: str) -> Job | None:
         result = await self._session.execute(select(Job).where(Job.apply_url == apply_url))

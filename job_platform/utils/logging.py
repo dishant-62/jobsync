@@ -16,7 +16,7 @@ def _level_from_string(level: str) -> int:
     return resolved
 
 
-def configure_logging(*, log_level: str, json_logs: bool = True) -> None:
+def configure_logging(*, log_level: str = "INFO", json_logs: bool = True) -> None:
     """
     Configure stdlib logging and structlog for JSON (or console) output.
 
