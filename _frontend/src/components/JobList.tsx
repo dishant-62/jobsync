@@ -6,13 +6,11 @@ interface JobListProps {
   jobs: Job[]
   isLoading: boolean
   error?: string | null
-  selectedJob: Job | null
-  onJobSelect: (job: Job) => void
-  onPageChange: (page: number) => void
-  total: number
-  page: number
-  pageSize: number
-  hasMore: boolean
+  selectedJob?: Job | null
+  onJobSelect?: (job: Job) => void
+  onPageChange?: (page: number) => void
+  page?: number
+  hasMore?: boolean
 }
 
 export const JobList: React.FC<JobListProps> = ({
@@ -22,10 +20,8 @@ export const JobList: React.FC<JobListProps> = ({
   selectedJob,
   onJobSelect,
   onPageChange,
-  total,
-  page,
-  pageSize,
-  hasMore
+  page = 1,
+  hasMore = false
 }) => {
   if (error) {
     return (
@@ -64,8 +60,6 @@ export const JobList: React.FC<JobListProps> = ({
     )
   }
 
-  const totalPages = Math.ceil(total / pageSize)
-
   return (
     <div className="divide-y divide-gray-100">
       {jobs.map((job) => (
@@ -73,12 +67,13 @@ export const JobList: React.FC<JobListProps> = ({
           key={job.id}
           job={job}
           isSelected={selectedJob?.id === job.id}
-          onClick={() => onJobSelect(job)}
+          onClick={onJobSelect ? () => onJobSelect(job) : undefined}
+          enableNavigation={!onJobSelect}
         />
       ))}
 
       {/* Load More Button */}
-      {hasMore && !isLoading && (
+      {hasMore && !isLoading && onPageChange && (
         <div className="p-4 text-center">
           <button
             onClick={() => onPageChange(page + 1)}
@@ -90,7 +85,7 @@ export const JobList: React.FC<JobListProps> = ({
       )}
 
       {/* Loading indicator for pagination */}
-      {isLoading && jobs.length > 0 && (
+      {isLoading && jobs.length > 0 && onPageChange && (
         <div className="p-4 text-center">
           <div className="inline-flex items-center text-gray-500 text-sm">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
@@ -100,7 +95,7 @@ export const JobList: React.FC<JobListProps> = ({
       )}
 
       {/* End of results */}
-      {!hasMore && jobs.length > 0 && (
+      {!hasMore && jobs.length > 0 && onPageChange && (
         <div className="p-4 text-center text-gray-500 text-sm">
           You've reached the end of the results
         </div>

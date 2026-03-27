@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { SearchBar } from '../components/SearchBar'
+import { TopBar } from '../components/TopBar'
 import { FiltersPanel } from '../components/FiltersPanel'
 import { JobList } from '../components/JobList'
-import { JobDetail } from '../components/JobDetail'
+import { JobDetailPanel } from '../components/JobDetailPanel'
 import { jobApi } from '../api/client'
 import type { Job } from '../types'
 
@@ -12,6 +12,7 @@ function JobsList() {
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [filtersCollapsed, setFiltersCollapsed] = useState(false)
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('')
@@ -98,91 +99,96 @@ function JobsList() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const handleToggleFilters = () => {
+    setFiltersCollapsed(!filtersCollapsed)
+  }
+
+  // Calculate active filters count
+  const activeFiltersCount = [
+    searchQuery,
+    location,
+    experienceLevel,
+    isRemote,
+    ...selectedSkills
+  ].filter(Boolean).length
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                💼 JobSync
-              </h1>
-              <p className="text-gray-600 text-sm">Discover your next opportunity</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-500">
-                {total > 0 && (
-                  <span>{total.toLocaleString()} jobs found</span>
+      {/* Top Bar */}
+      <TopBar
+        totalJobs={total}
+        isLoading={isLoading}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearch}
+        activeFiltersCount={activeFiltersCount}
+      />
+
+      {/* Main Content - 3 Column Layout */}
+      <div className="flex h-[calc(100vh-4rem)]">
+        {/* Filters Panel - Left Column */}
+        <FiltersPanel
+          onFiltersChange={handleFiltersChange}
+          isLoading={isLoading}
+          isCollapsed={filtersCollapsed}
+          onToggleCollapse={handleToggleFilters}
+        />
+
+        {/* Job List - Center Column */}
+        <div className={`flex-1 ${!filtersCollapsed ? 'lg:w-2/5 xl:w-2/5' : 'lg:w-1/2 xl:w-1/2'} bg-white border-r border-gray-200`}>
+          <div className="h-full flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Jobs
+                  {total > 0 && (
+                    <span className="text-gray-500 font-normal ml-2">
+                      ({total.toLocaleString()})
+                    </span>
+                  )}
+                </h2>
+                {activeFiltersCount > 0 && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    {activeFiltersCount} filter{activeFiltersCount !== 1 ? 's' : ''} applied
+                  </p>
                 )}
               </div>
+
+              {/* Mobile Filter Toggle */}
+              <button
+                onClick={handleToggleFilters}
+                className="lg:hidden p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                title={filtersCollapsed ? "Show filters" : "Hide filters"}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Job List Content */}
+            <div className="flex-1 overflow-y-auto">
+              <JobList
+                jobs={jobs}
+                isLoading={isLoading}
+                error={error}
+                selectedJob={selectedJob}
+                onJobSelect={handleJobSelect}
+                onPageChange={handlePageChange}
+                page={page}
+                hasMore={hasMore}
+              />
             </div>
           </div>
         </div>
-      </header>
 
-      {/* Search and Filters Bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <SearchBar onSearch={handleSearch} isLoading={isLoading} />
-            </div>
-            <div className="lg:w-80">
-              <FiltersPanel onFiltersChange={handleFiltersChange} isLoading={isLoading} />
-            </div>
-          </div>
+        {/* Job Detail Panel - Right Column */}
+        <div className={`hidden lg:block ${!filtersCollapsed ? 'lg:w-2/5 xl:w-2/5' : 'lg:w-1/2 xl:w-1/2'} bg-white`}>
+          <JobDetailPanel selectedJob={selectedJob} />
         </div>
       </div>
 
-      {/* Main Content - Split Screen Layout */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex gap-6 h-[calc(100vh-200px)]">
-          {/* Left Panel - Job List (35%) */}
-          <div className="w-full lg:w-2/5 xl:w-2/5 flex flex-col">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex-1 overflow-hidden">
-              <div className="p-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Jobs {total > 0 && <span className="text-gray-500 font-normal">({total.toLocaleString()})</span>}
-                </h2>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <JobList
-                  jobs={jobs}
-                  isLoading={isLoading}
-                  error={error}
-                  selectedJob={selectedJob}
-                  onJobSelect={handleJobSelect}
-                  onPageChange={handlePageChange}
-                  total={total}
-                  page={page}
-                  pageSize={pageSize}
-                  hasMore={hasMore}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Right Panel - Job Details (65%) */}
-          <div className="hidden lg:block lg:w-3/5 xl:w-3/5">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full overflow-hidden">
-              {selectedJob ? (
-                <JobDetail job={selectedJob} isEmbedded={true} />
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">💼</div>
-                    <h3 className="text-xl font-medium mb-2">Select a job to view details</h3>
-                    <p className="text-gray-400">Choose a job from the list to see full information</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Mobile Job Detail Modal/Overlay */}
+      {/* Mobile Job Detail Modal */}
       {selectedJob && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
@@ -198,7 +204,7 @@ function JobsList() {
               </button>
             </div>
             <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
-              <JobDetail job={selectedJob} isEmbedded={true} />
+              <JobDetailPanel selectedJob={selectedJob} />
             </div>
           </div>
         </div>
