@@ -68,7 +68,7 @@ export const FeaturedJobs: React.FC<FeaturedJobsProps> = ({ jobs, isLoading }) =
           )}
 
           <Link
-            to={`/jobs/${job.id}`}
+            to={`/jobs/${job.job_id}`}
             className="btn-primary w-full text-center"
           >
             View Details

@@ -11,6 +11,8 @@ from typing import Any
 import httpx
 import structlog
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from job_platform.config import get_settings
 from job_platform.crawler.sources.config import SourceConfig, get_sources
 from job_platform.crawler.sources.registry import get_crawler
@@ -101,18 +103,26 @@ class PipelineRunResult:
 async def process_single_job(
     raw_job_data: dict[str, Any],
     source_name: str,
-    source_type: str,    source_identifier: str,    company_repo: CompanyRepository,
+    source_type: str,
+    source_identifier: str,
+    company_repo: CompanyRepository,
     job_repo: JobRepository,
+    session: AsyncSession,
 ) -> JobProcessingResult:
     """
     Process a single job through the complete pipeline: scraper → parser → DB.
+
+    Uses a SAVEPOINT so that one failed insert does not poison the session
+    and silently kill every subsequent insert in the same transaction.
 
     Args:
         raw_job_data: Raw job data from crawler (dict or NormalizedJob)
         source_name: Name of the source
         source_type: Type of the source
+        source_identifier: Unique source identifier
         company_repo: Company repository
         job_repo: Job repository
+        session: The async DB session (needed for savepoints)
 
     Returns:
         Result of job processing
@@ -187,50 +197,55 @@ async def process_single_job(
         apply_url = _clip(apply_url, _MAX_APPLY_URL_LEN)
         job_id = generate_job_id(source_identifier, apply_url)
 
-        # Step 5: Get or create company
-        db_company = await company_repo.get_or_create_for_source(
-            source_type=source_type,
-            identifier=source_identifier,
-            display_name=source_name,
-        )
+        # Step 5–9 run inside a SAVEPOINT so a single failure
+        # does not poison the session for subsequent jobs.
+        async with session.begin_nested():
+            # Step 5: Get or create company
+            db_company = await company_repo.get_or_create_for_source(
+                source_type=source_type,
+                identifier=source_identifier,
+                display_name=source_name,
+            )
 
-        # Step 6: Normalize dates
-        posted_raw = final_job.posted_date
-        if not isinstance(posted_raw, (datetime, date)):
-            posted_raw = datetime.fromisoformat(str(posted_raw))
-        posted_date = _posted_date_only(posted_raw)
+            # Step 6: Normalize dates
+            posted_raw = final_job.posted_date
+            if posted_raw is None:
+                posted_raw = datetime.now()
+            elif not isinstance(posted_raw, (datetime, date)):
+                posted_raw = datetime.fromisoformat(str(posted_raw))
+            posted_date = _posted_date_only(posted_raw)
 
-        # Step 7: Clip text fields to DB limits
-        title = _clip(str(final_job.title), _MAX_TITLE_LEN)
-        location = _clip(str(final_job.location or ""), _MAX_LOCATION_LEN)
-        description = str(final_job.description)
+            # Step 7: Clip text fields to DB limits
+            title = _clip(str(final_job.title), _MAX_TITLE_LEN)
+            location = _clip(str(final_job.location or ""), _MAX_LOCATION_LEN)
+            description = str(final_job.description)
 
-        # Step 8: Calculate job ranking score
-        score = calculate_job_score(
-            posted_date=posted_date,
-            salary_min=final_job.salary_min,
-            salary_max=final_job.salary_max,
-            is_remote=final_job.is_remote,
-            description=description,
-            skills=final_job.skills,
-        )
+            # Step 8: Calculate job ranking score
+            score = calculate_job_score(
+                posted_date=posted_date,
+                salary_min=final_job.salary_min,
+                salary_max=final_job.salary_max,
+                is_remote=final_job.is_remote,
+                description=description,
+                skills=final_job.skills,
+            )
 
-        # Step 9: Upsert into database
-        db_job, created = await job_repo.upsert_job(
-            job_id=job_id,
-            company_id=db_company.id,
-            title=title,
-            location=location,
-            description=description,
-            apply_url=apply_url,
-            posted_date=posted_date,
-            skills=final_job.skills,
-            experience_level=final_job.experience_level,
-            salary_min=final_job.salary_min,
-            salary_max=final_job.salary_max,
-            is_remote=final_job.is_remote,
-            score=score,
-        )
+            # Step 9: Upsert into database
+            db_job, created = await job_repo.upsert_job(
+                job_id=job_id,
+                company_id=db_company.id,
+                title=title,
+                location=location,
+                description=description,
+                apply_url=apply_url,
+                posted_date=posted_date,
+                skills=final_job.skills,
+                experience_level=final_job.experience_level,
+                salary_min=final_job.salary_min,
+                salary_max=final_job.salary_max,
+                is_remote=final_job.is_remote,
+                score=score,
+            )
 
         if created:
             logger.info(
@@ -338,15 +353,22 @@ async def process_source_jobs(
             company_repo = CompanyRepository(session)
             job_repo = JobRepository(session)
 
-            for raw_job_data in raw_jobs:
+            for idx, raw_job_data in enumerate(raw_jobs, 1):
                 result = await process_single_job(
                     raw_job_data, source.name, source.source_type, source.company or source.url or source.name,
-                    company_repo, job_repo
+                    company_repo, job_repo, session
                 )
                 job_results.append(result)
+                if idx % 50 == 0:
+                    logger.info("pipeline_progress", source=source.name, processed=idx, total=len(raw_jobs))
 
-            # Commit all changes
+            # Commit all accepted changes
             await session.commit()
+            logger.info(
+                "pipeline_commit_done",
+                source=source.name,
+                committed_jobs=sum(1 for r in job_results if r.inserted or r.duplicate),
+            )
 
         # Aggregate results
         processed = len(job_results)
@@ -491,5 +513,13 @@ async def run_main_pipeline(
         sources_successful=successful_sources,
         sources_failed=failed_sources
     )
+    print(f"\n{'='*60}")
+    print(f"  🏁 PIPELINE COMPLETE")
+    print(f"  Fetched {total_jobs_processed} jobs | "
+          f"Inserted {total_insert_success} | "
+          f"Duplicates {total_duplicates} | "
+          f"Failed {total_insert_failures}")
+    print(f"  Sources: {successful_sources}/{total_sources} succeeded")
+    print(f"{'='*60}\n")
 
     return PipelineRunResult(metrics, source_results)

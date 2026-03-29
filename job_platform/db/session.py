@@ -13,7 +13,19 @@ from sqlalchemy.ext.asyncio import (
 
 from job_platform.config import get_settings
 
+import logging as _logging
+
 _settings = get_settings()
+_db_logger = _logging.getLogger(__name__)
+
+# Log the DB URL at module load (mask password for safety)
+_masked_url = str(_settings.database_url)
+if "@" in _masked_url:
+    _prefix, _suffix = _masked_url.split("@", 1)
+    _scheme_user = _prefix.rsplit(":", 1)[0]
+    _masked_url = f"{_scheme_user}:****@{_suffix}"
+_db_logger.info("DATABASE URL (masked): %s", _masked_url)
+print(f"\n🔌 DATABASE URL: {_masked_url}\n")
 
 engine: AsyncEngine = create_async_engine(
     _settings.database_url,

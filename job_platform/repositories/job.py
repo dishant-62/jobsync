@@ -147,13 +147,22 @@ class JobRepository:
         return result.scalar_one_or_none()
 
     async def get_job_by_id(self, job_id: str | uuid.UUID) -> Job | None:
-        """Get job by either job_id (string) or UUID id."""
-        if isinstance(job_id, str) and len(job_id) == 64:
-            # It's a job_id string
-            result = await self._session.execute(select(Job).where(Job.job_id == job_id))
+        """Get job by either job_id (SHA256 hash string) or UUID id."""
+        # Eagerly load company to avoid lazy-load MissingGreenlet errors
+        if isinstance(job_id, uuid.UUID):
+            stmt = select(Job).options(selectinload(Job.company)).where(Job.id == job_id)
+        elif len(job_id) == 64:
+            # 64-char hex → SHA256 job_id
+            stmt = select(Job).options(selectinload(Job.company)).where(Job.job_id == job_id)
         else:
-            # It's a UUID
-            result = await self._session.execute(select(Job).where(Job.id == job_id))
+            # Attempt UUID parse (e.g. 36-char UUID string from frontend)
+            try:
+                uid = uuid.UUID(job_id)
+                stmt = select(Job).options(selectinload(Job.company)).where(Job.id == uid)
+            except ValueError:
+                # Not a valid UUID – try as job_id string anyway
+                stmt = select(Job).options(selectinload(Job.company)).where(Job.job_id == job_id)
+        result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def count_jobs(

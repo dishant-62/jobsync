@@ -36,6 +36,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application lifespan hooks (startup / shutdown)."""
     settings = get_settings()
     logger.info("application_starting", environment=settings.environment)
+
+    # Debug: verify DB connectivity and job count at startup
+    from job_platform.db.session import session_factory
+    from sqlalchemy import text
+    try:
+        async with session_factory() as session:
+            row = await session.execute(text("SELECT COUNT(*) FROM jobs"))
+            count = row.scalar()
+            print(f"\n📊 STARTUP DB CHECK: {count} jobs in database\n")
+            logger.info("startup_db_check", job_count=count)
+    except Exception as exc:
+        print(f"\n❌ STARTUP DB CHECK FAILED: {exc}\n")
+        logger.error("startup_db_check_failed", error=str(exc))
+
     yield
     await engine.dispose()
     logger.info("application_stopping")

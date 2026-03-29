@@ -66,11 +66,11 @@ def _normalize_lever_job(raw_data: dict[str, Any], source: str) -> dict[str, Any
     """
     Normalize raw Lever job data to unified format.
 
-    Expected raw fields: title, company_name, location, description, apply_url, posted_date
+    Expected raw fields: title, company (or company_name), location, description, apply_url, posted_date
     """
     return {
         "title": raw_data.get("title", "").strip(),
-        "company": raw_data.get("company_name", "").strip(),
+        "company": (raw_data.get("company") or raw_data.get("company_name") or "").strip(),
         "location": raw_data.get("location", "").strip() or None,
         "description": _clean_html_description(raw_data.get("description", "")),
         "apply_url": raw_data.get("apply_url", "").strip(),

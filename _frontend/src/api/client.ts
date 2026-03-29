@@ -42,7 +42,9 @@ export const jobApi = {
     //   params.skills = filterParams.skills.join(',')
     // }
 
+    console.log(`🔌 API REQUEST: GET /jobs`, params)
     const response = await client.get<JobListResponse>('/jobs', { params })
+    console.log(`✅ API RESPONSE: ${response.data.total} total, ${response.data.jobs.length} returned, page ${response.data.page}`)
     return response.data
   },
 
