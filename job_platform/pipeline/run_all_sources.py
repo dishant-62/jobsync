@@ -17,6 +17,7 @@ from job_platform.pipeline.main_pipeline import (
     PipelineMetrics,
     PipelineRunResult,
 )
+from job_platform.config import get_settings
 from job_platform.utils.logging import configure_logging, get_logger
 
 logger = get_logger("job_platform.cli")
@@ -161,7 +162,8 @@ def _print_help() -> None:
 
 async def main() -> int:
     """Main CLI entry point."""
-    configure_logging()
+    settings = get_settings()
+    configure_logging(log_level=settings.log_level, json_logs=settings.json_logs)
     
     command = sys.argv[1] if len(sys.argv) > 1 else "run"
     

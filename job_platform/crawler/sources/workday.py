@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import re
 from datetime import UTC, datetime
 from typing import Any
@@ -21,7 +22,7 @@ def _parse_posted_date(date_str: str | None) -> datetime:
     """Parse various date formats from Workday."""
     if not date_str:
         return datetime.now(tz=UTC)
-    
+
     try:
         # Try ISO format
         dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
@@ -80,12 +81,12 @@ class WorkdayCrawler(BaseCrawler):
         self, company: str, client: httpx.AsyncClient
     ) -> list[NormalizedJob]:
         """
-        Fetch jobs from Workday JSON API.
-        
+        Fetch jobs from Workday JSON API with multiple strategies.
+
         Args:
             company: Company identifier or career page URL
             client: Async HTTP client
-            
+
         Returns:
             List of normalized jobs
         """
@@ -93,65 +94,159 @@ class WorkdayCrawler(BaseCrawler):
         if not identifier:
             raise ValueError("Company identifier must be non-empty")
 
-        # Try to construct standard Workday API endpoint
-        # Pattern: https://{company}.myworkdayjobs.com/en-US/
+        all_jobs = []
+
+        # Strategy 1: Try standard SearchJobs endpoint
+        try:
+            jobs = await self._fetch_from_search_jobs(identifier, client)
+            all_jobs.extend(jobs)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"SearchJobs endpoint failed for {identifier}: {e}")
+
+        # Strategy 2: Try alternative endpoints if first failed
+        if not all_jobs:
+            try:
+                jobs = await self._fetch_from_alternative_endpoints(identifier, client)
+                all_jobs.extend(jobs)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Alternative endpoints failed for {identifier}: {e}")
+
+        # Strategy 3: Try scraping HTML if JSON APIs fail
+        if not all_jobs:
+            try:
+                jobs = await self._scrape_html_jobs(identifier, client)
+                all_jobs.extend(jobs)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"HTML scraping failed for {identifier}: {e}")
+
+        return all_jobs
+
+    async def _fetch_from_search_jobs(self, identifier: str, client: httpx.AsyncClient) -> list[NormalizedJob]:
+        """Try the standard Workday SearchJobs JSON endpoint."""
+        if not identifier.startswith("http"):
+            url = f"https://{identifier}.myworkdayjobs.com/en-US/SearchJobs"
+        else:
+            url = identifier
+
+        payload = await _get_json_with_retries(client, url)
+        jobs_raw = payload.get("jobPostings") or payload.get("jobs") or []
+
+        if not isinstance(jobs_raw, list):
+            return []
+
+        normalized_jobs: list[NormalizedJob] = []
+        for item in jobs_raw:
+            if not isinstance(item, dict):
+                continue
+
+            job = self._normalize_job(item, identifier)
+            if job and self._validate_normalized_job(job):
+                normalized_jobs.append(job)
+
+        return normalized_jobs
+
+    async def _fetch_from_alternative_endpoints(self, identifier: str, client: httpx.AsyncClient) -> list[NormalizedJob]:
+        """Try alternative Workday API endpoints."""
+        normalized_jobs = []
+
+        # Try different possible endpoints
+        endpoints = [
+            f"https://{identifier}.myworkdayjobs.com/wday/cxs/{identifier}/jobs",
+            f"https://{identifier}.myworkdayjobs.com/wday/cxs/{identifier}/SearchJobs",
+            f"https://{identifier}.myworkdayjobs.com/en-US/careers/jobs",
+        ]
+
+        for url in endpoints:
+            try:
+                payload = await _get_json_with_retries(client, url)
+                jobs_raw = payload.get("jobPostings") or payload.get("jobs") or []
+
+                if isinstance(jobs_raw, list) and jobs_raw:
+                    for item in jobs_raw:
+                        if isinstance(item, dict):
+                            job = self._normalize_job(item, identifier)
+                            if job and self._validate_normalized_job(job):
+                                normalized_jobs.append(job)
+
+                    # If we found jobs, return them
+                    if normalized_jobs:
+                        break
+
+            except Exception:
+                continue  # Try next endpoint
+
+        return normalized_jobs
+
+    async def _scrape_html_jobs(self, identifier: str, client: httpx.AsyncClient) -> list[NormalizedJob]:
+        """Fallback: Scrape jobs from HTML if JSON APIs fail."""
         if not identifier.startswith("http"):
             url = f"https://{identifier}.myworkdayjobs.com/en-US/SearchJobs"
         else:
             url = identifier
 
         try:
-            payload = await _get_json_with_retries(client, url)
-            jobs_raw = payload.get("jobPostings")
-            if not isinstance(jobs_raw, list):
-                return []
+            response = await client.get(url)
+            response.raise_for_status()
+            html_content = response.text
 
-            normalized_jobs: list[NormalizedJob] = []
-            for item in jobs_raw:
-                if not isinstance(item, dict):
+            # Simple regex-based extraction (could be improved with BeautifulSoup)
+            jobs = []
+
+            # Look for job data in script tags or JSON embedded in HTML
+            import re
+            json_matches = re.findall(r'window\._wd\.jobs\s*=\s*(\{.*?\});', html_content, re.DOTALL)
+
+            for match in json_matches:
+                try:
+                    data = json.loads(match)
+                    job_postings = data.get("jobPostings", [])
+                    for item in job_postings:
+                        job = self._normalize_job(item, identifier)
+                        if job and self._validate_normalized_job(job):
+                            jobs.append(job)
+                except json.JSONDecodeError:
                     continue
 
-                job = self._normalize_job(item, identifier)
-                if job and self._validate_normalized_job(job):
-                    normalized_jobs.append(job)
+            return jobs
 
-            return normalized_jobs
-        except httpx.RequestError as e:
-            # Log but don't fail - Workday APIs are complex
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.warning(f"Failed to fetch from Workday {identifier}: {e}")
+        except Exception:
             return []
 
     def _normalize_job(self, raw: dict[str, Any], company_name: str) -> NormalizedJob | None:
         """
         Normalize raw Workday job posting.
-        
+
         Expected fields vary, but typically include:
         - title, description, jobPostingUrl
         - locationCity, locationCountry
         """
-        title = raw.get("title") or raw.get("jobTitle")
+        title = raw.get("title") or raw.get("jobTitle") or raw.get("positionTitle")
         if not isinstance(title, str) or not title.strip():
             return None
 
-        apply_url = raw.get("jobPostingUrl") or raw.get("externalJobPostingUrl")
+        apply_url = raw.get("jobPostingUrl") or raw.get("externalJobPostingUrl") or raw.get("applyUrl")
         if not isinstance(apply_url, str) or not apply_url.strip():
             return None
 
         # Build location from city/state/country
         location_parts = []
-        for key in ["locationCity", "locationState", "locationCountry"]:
+        for key in ["locationCity", "locationState", "locationCountry", "city", "state", "country"]:
             loc = raw.get(key)
             if isinstance(loc, str) and loc.strip():
                 location_parts.append(loc.strip())
         location = ", ".join(location_parts)
 
-        description = raw.get("description") or raw.get("jobDescription", "")
+        description = raw.get("description") or raw.get("jobDescription") or raw.get("positionDescription", "")
         if not isinstance(description, str):
             description = ""
 
-        posted_date_str = raw.get("postedDate") or raw.get("datePosted")
+        posted_date_str = raw.get("postedDate") or raw.get("datePosted") or raw.get("createdDate")
         posted_date = _parse_posted_date(posted_date_str)
 
         return NormalizedJob(

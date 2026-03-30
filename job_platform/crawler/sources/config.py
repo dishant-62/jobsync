@@ -52,7 +52,7 @@ class SourceConfig:
             raise ValueError(f"Unknown source type: {self.source_type}")
 
         # Company-based sources need company identifier
-        if self.source_type in {"greenhouse", "lever", "workday", "wellfound"}:
+        if self.source_type in {"greenhouse", "lever", "workday"}:
             if not self.company:
                 raise ValueError(
                     f"{self.source_type} requires 'company' field"
@@ -65,58 +65,100 @@ class SourceConfig:
 
 
 # ==============================================================================
-# BULK ATS COMPANY CONFIGURATIONS
+# BATCHED ATS COMPANY CONFIGURATIONS
 # ==============================================================================
 
-# Greenhouse public board tokens
+# Greenhouse public board tokens - Batched for scalability
 # https://boards.greenhouse.io/{token}
-GREENHOUSE_COMPANIES = [
-    "stripe",
-    "airbnb",
-    "notion",
-    "robinhood",
-    "discord",
-    "coinbase",
-    "shopify",
-    "datadog",
-    "snowflake",
-    "figma",
-    "canva",
-    "dropbox",
-    "slack",
-    "pinterest",
-    "square",
-    "reddit",
-    "twilio",
-    "instacart",
-    "yelp",
-    "asana",
+GREENHOUSE_BATCH_1 = [
+    "stripe", "airbnb", "notion", "robinhood", "discord", "coinbase",
+    "shopify", "datadog", "snowflake", "figma", "canva", "dropbox",
+    "slack", "pinterest", "square", "reddit", "twilio", "instacart",
+    "yelp", "asana", "affirm", "benchling", "brex", "checkr", "chime"
 ]
 
-# Lever public career pages
+GREENHOUSE_BATCH_2 = [
+    "cloverhealth", "coursera", "cruise", "ginkgo", "gusto", "hashicorp",
+    "intercom", "khanacademy", "lime", "loom", "lyft", "medium",
+    "mixpanel", "okta", "opendoor", "pagerduty", "palantir", "plaid",
+    "postman", "quora", "segment", "snap", "uber", "zapier", "atlassian"
+]
+
+GREENHOUSE_BATCH_3 = [
+    "box", "cloudera", "databricks", "elastic", "fastly", "github",
+    "grafana", "hackerone", "jetbrains", "kong", "launchdarkly", "linear",
+    "mattermost", "newrelic", "observable", "planetscale", "prisma",
+    "quickbooks", "replit", "sentry", "temporal", "vercel", "adobe"
+]
+
+GREENHOUSE_BATCH_4 = [
+    "salesforce", "oracle", "sap", "ibm", "intel", "amd", "nvidia",
+    "qualcomm", "broadcom", "cisco", "juniper", "arista", "paloaltonetworks",
+    "checkpoint", "f5", "akamai", "cloudflare", "fastly", "imperva",
+    "zscaler", "crowdstrike", "paloaltonetworks", "fortinet"
+]
+
+# Combine and deduplicate Greenhouse companies
+ALL_GREENHOUSE = list(set(
+    GREENHOUSE_BATCH_1 + GREENHOUSE_BATCH_2 + GREENHOUSE_BATCH_3 + GREENHOUSE_BATCH_4
+))
+
+# Lever public career pages - Batched
 # https://careers.{company}.com or api.lever.co/v0/postings/{company}
-LEVER_COMPANIES = [
-    "netflix",
-    "uber",
-    "lyft",
-    "palantir",
-    "rippling",
-    "brex",
-    "scaleai",
-    "flexport",
-    "coursera",
-    "gusto",
+LEVER_BATCH_1 = [
+    "netflix", "uber", "lyft", "palantir", "rippling", "brex",
+    "scaleai", "flexport", "coursera", "gusto", "coinbase", "airtable",
+    "superhuman", "productboard", "webflow", "figma", "discord", "postman",
+    "notion", "asana", "zapier", "segment", "loom", "intercom", "datadog"
 ]
 
-# Workday company identifiers
-# https://{company}.myworkdayjobs.com/en-US/
-WORKDAY_COMPANIES = [
-    "microsoft",
-    "meta",
-    "amazon",
-    "google",
-    "apple",
+LEVER_BATCH_2 = [
+    "hashicorp", "stripe", "shopify", "slack", "snowflake", "twilio",
+    "reddit", "pinterest", "square", "dropbox", "airbnb", "robinhood",
+    "canva", "instacart", "yelp", "atlassian", "box", "cloudera",
+    "databricks", "elastic", "fastly", "github", "grafana", "hackerone"
 ]
+
+LEVER_BATCH_3 = [
+    "jetbrains", "kong", "launchdarkly", "linear", "mattermost", "newrelic",
+    "observable", "planetscale", "prisma", "quickbooks", "replit", "sentry",
+    "temporal", "vercel", "affirm", "benchling", "checkr", "chime",
+    "cloverhealth", "cruise", "ginkgo", "khanacademy", "lime", "medium"
+]
+
+LEVER_BATCH_4 = [
+    "mixpanel", "okta", "opendoor", "pagerduty", "plaid", "quora",
+    "snap", "adobe", "salesforce", "oracle", "sap", "ibm", "intel",
+    "amd", "nvidia", "qualcomm", "broadcom", "cisco", "juniper", "arista"
+]
+
+# Combine and deduplicate Lever companies
+ALL_LEVER = list(set(
+    LEVER_BATCH_1 + LEVER_BATCH_2 + LEVER_BATCH_3 + LEVER_BATCH_4
+))
+
+# Workday company identifiers - Batched
+# https://{company}.myworkdayjobs.com/en-US/
+WORKDAY_BATCH_1 = [
+    "microsoft", "meta", "amazon", "google", "apple", "tesla",
+    "nvidia", "oracle", "salesforce", "adobe", "autodesk", "servicenow"
+]
+
+WORKDAY_BATCH_2 = [
+    "vmware", "splunk", "okta", "crowdstrike", "paloaltonetworks", "zscaler",
+    "fortinet", "checkpoint", "f5", "akamai", "cloudflare", "fastly",
+    "imperva", "qualys", "tenable", "rapid7", "darktrace", "cisco"
+]
+
+# Combine and deduplicate Workday companies
+ALL_WORKDAY = list(set(
+    WORKDAY_BATCH_1 + WORKDAY_BATCH_2
+))
+
+# Legacy single lists for backward compatibility
+GREENHOUSE_COMPANIES = ALL_GREENHOUSE
+LEVER_COMPANIES = ALL_LEVER
+WORKDAY_COMPANIES = ALL_WORKDAY
 
 # Static URL-based sources (non-ATS)
 URL_SOURCES = [
@@ -201,6 +243,174 @@ def _remove_duplicates(sources: list[SourceConfig]) -> list[SourceConfig]:
             unique_sources.append(source)
     
     return unique_sources
+
+
+# ==============================================================================
+# SOURCE VALIDATION AND ACTIVE/FAILED SYSTEM
+# ==============================================================================
+
+@dataclass
+class ValidationResult:
+    """Result of source validation."""
+    source: SourceConfig
+    is_valid: bool
+    error_message: str | None = None
+    response_time: float | None = None
+
+
+async def _validate_source_availability(source: SourceConfig, timeout: float = 10.0) -> ValidationResult:
+    """
+    Validate if a source is available by making a light request.
+    
+    Args:
+        source: Source configuration to validate
+        timeout: Request timeout in seconds
+        
+    Returns:
+        ValidationResult with success/failure status
+    """
+    import asyncio
+    import time
+    import httpx
+    
+    start_time = time.time()
+    
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            if source.source_type == "greenhouse":
+                # Check Greenhouse board availability
+                url = f"https://boards.greenhouse.io/{source.company}"
+                response = await client.head(url, follow_redirects=True)
+                is_valid = response.status_code == 200
+                
+            elif source.source_type == "lever":
+                # Check Lever API availability
+                url = f"https://api.lever.co/v0/postings/{source.company}"
+                response = await client.get(url)
+                is_valid = response.status_code == 200 and len(response.json()) > 0
+                
+            elif source.source_type == "workday":
+                # Check Workday careers page
+                url = f"https://{source.company}.myworkdayjobs.com/en-US/"
+                response = await client.head(url, follow_redirects=True)
+                is_valid = response.status_code == 200
+                
+            elif source.source_type in {"job_board", "remote_jobs", "wellfound"}:
+                # Check URL-based sources
+                if source.url:
+                    response = await client.head(source.url, follow_redirects=True)
+                    is_valid = response.status_code == 200
+                else:
+                    is_valid = False
+                    
+            else:
+                is_valid = True  # Unknown types pass validation
+                
+            response_time = time.time() - start_time
+            
+            return ValidationResult(
+                source=source,
+                is_valid=is_valid,
+                response_time=response_time
+            )
+            
+    except Exception as e:
+        response_time = time.time() - start_time
+        return ValidationResult(
+            source=source,
+            is_valid=False,
+            error_message=str(e),
+            response_time=response_time
+        )
+
+
+async def validate_sources_batch(sources: list[SourceConfig], batch_size: int = 20, delay: float = 1.0) -> tuple[list[SourceConfig], list[ValidationResult]]:
+    """
+    Validate sources in batches with delays to avoid rate limiting.
+    
+    Args:
+        sources: List of sources to validate
+        batch_size: Number of sources to validate concurrently
+        delay: Delay between batches in seconds
+        
+    Returns:
+        Tuple of (active_sources, failed_results)
+    """
+    active_sources: list[SourceConfig] = []
+    failed_results: list[ValidationResult] = []
+    
+    logger.info("starting_source_validation", total_sources=len(sources), batch_size=batch_size)
+    
+    for i in range(0, len(sources), batch_size):
+        batch = sources[i:i + batch_size]
+        logger.info("validating_batch", batch_start=i, batch_end=min(i + batch_size, len(sources)))
+        
+        # Validate batch concurrently
+        tasks = [_validate_source_availability(source) for source in batch]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        for j, result in enumerate(results):
+            source = batch[j]
+            
+            if isinstance(result, Exception):
+                # Handle unexpected errors
+                failed_results.append(ValidationResult(
+                    source=source,
+                    is_valid=False,
+                    error_message=str(result)
+                ))
+                logger.warning("validation_error", source=source.name, error=str(result))
+                
+            elif result.is_valid:
+                active_sources.append(source)
+                logger.info("source_valid", source=source.name, response_time=f"{result.response_time:.2f}s")
+                
+            else:
+                failed_results.append(result)
+                logger.warning("source_invalid", 
+                             source=source.name, 
+                             error=result.error_message,
+                             response_time=f"{result.response_time:.2f}s" if result.response_time else None)
+        
+        # Delay between batches (except for the last one)
+        if i + batch_size < len(sources):
+            await asyncio.sleep(delay)
+    
+    logger.info("validation_completed", 
+               active=len(active_sources), 
+               failed=len(failed_results),
+               success_rate=f"{len(active_sources)/len(sources)*100:.1f}%" if sources else "0%")
+    
+    return active_sources, failed_results
+
+
+def save_failed_sources_to_file(failed_results: list[ValidationResult], filename: str = "failed_sources.json") -> None:
+    """
+    Save failed source validation results to JSON file.
+    
+    Args:
+        failed_results: List of failed validation results
+        filename: Output filename
+    """
+    import json
+    from pathlib import Path
+    
+    failed_data = []
+    for result in failed_results:
+        failed_data.append({
+            "name": result.source.name,
+            "type": result.source.source_type,
+            "company": result.source.company,
+            "url": result.source.url,
+            "error": result.error_message,
+            "response_time": result.response_time
+        })
+    
+    output_path = Path(filename)
+    with open(output_path, 'w') as f:
+        json.dump(failed_data, f, indent=2)
+    
+    logger.info("failed_sources_saved", filename=str(output_path), count=len(failed_data))
 
 
 def _validate_company_names(company_list: list[str], source_type: str) -> list[str]:

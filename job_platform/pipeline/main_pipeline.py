@@ -11,6 +11,8 @@ from typing import Any
 import httpx
 import structlog
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from job_platform.config import get_settings
 from job_platform.crawler.sources.config import SourceConfig, get_sources
 from job_platform.crawler.sources.registry import get_crawler
@@ -20,7 +22,9 @@ from job_platform.parser.job_parser import parse_job_description
 from job_platform.repositories.company import CompanyRepository
 from job_platform.repositories.job import JobRepository
 from job_platform.scraper.unified_scraper import normalize_raw_job
+from job_platform.utils.job_id import generate_job_id
 from job_platform.utils.logging import configure_logging, get_logger
+from job_platform.utils.ranking import calculate_job_score
 
 logger = get_logger("job_platform.pipeline.main_pipeline")
 
@@ -100,27 +104,42 @@ async def process_single_job(
     raw_job_data: dict[str, Any],
     source_name: str,
     source_type: str,
+    source_identifier: str,
     company_repo: CompanyRepository,
     job_repo: JobRepository,
+    session: AsyncSession,
 ) -> JobProcessingResult:
     """
     Process a single job through the complete pipeline: scraper → parser → DB.
 
+    Uses a SAVEPOINT so that one failed insert does not poison the session
+    and silently kill every subsequent insert in the same transaction.
+
     Args:
-        raw_job_data: Raw job data from crawler
+        raw_job_data: Raw job data from crawler (dict or NormalizedJob)
         source_name: Name of the source
         source_type: Type of the source
+        source_identifier: Unique source identifier
         company_repo: Company repository
         job_repo: Job repository
+        session: The async DB session (needed for savepoints)
 
     Returns:
         Result of job processing
     """
-    job_title = raw_job_data.get("title", "Unknown Title")
+    # Handle both dict and NormalizedJob objects
+    if hasattr(raw_job_data, 'to_dict'):
+        # It's a NormalizedJob object
+        job_dict = raw_job_data.to_dict()
+        job_title = raw_job_data.title
+    else:
+        # It's already a dict
+        job_dict = raw_job_data
+        job_title = job_dict.get("title", "Unknown Title")
 
     try:
         # Step 1: Normalize raw job data using unified scraper
-        raw_job = await normalize_raw_job(raw_job_data, source_type)
+        raw_job = await normalize_raw_job(job_dict, source_type)
 
         if raw_job is None:
             logger.warning(
@@ -173,78 +192,89 @@ async def process_single_job(
         final_job_data = {**raw_job.model_dump(), **parsed_info.model_dump()}
         final_job = FinalJob(**final_job_data)
 
-        # Step 4: Check for duplicates
+        # Step 4: Generate deterministic job_id
         apply_url = str(final_job.apply_url)
         apply_url = _clip(apply_url, _MAX_APPLY_URL_LEN)
+        job_id = generate_job_id(source_identifier, apply_url)
 
-        existing = await job_repo.get_job_by_url(apply_url)
-        if existing is not None:
+        # Step 5–9 run inside a SAVEPOINT so a single failure
+        # does not poison the session for subsequent jobs.
+        async with session.begin_nested():
+            # Step 5: Get or create company
+            db_company = await company_repo.get_or_create_for_source(
+                source_type=source_type,
+                identifier=source_identifier,
+                display_name=source_name,
+            )
+
+            # Step 6: Normalize dates
+            posted_raw = final_job.posted_date
+            if posted_raw is None:
+                posted_raw = datetime.now()
+            elif not isinstance(posted_raw, (datetime, date)):
+                posted_raw = datetime.fromisoformat(str(posted_raw))
+            posted_date = _posted_date_only(posted_raw)
+
+            # Step 7: Clip text fields to DB limits
+            title = _clip(str(final_job.title), _MAX_TITLE_LEN)
+            location = _clip(str(final_job.location or ""), _MAX_LOCATION_LEN)
+            description = str(final_job.description)
+
+            # Step 8: Calculate job ranking score
+            score = calculate_job_score(
+                posted_date=posted_date,
+                salary_min=final_job.salary_min,
+                salary_max=final_job.salary_max,
+                is_remote=final_job.is_remote,
+                description=description,
+                skills=final_job.skills,
+            )
+
+            # Step 9: Upsert into database
+            db_job, created = await job_repo.upsert_job(
+                job_id=job_id,
+                company_id=db_company.id,
+                title=title,
+                location=location,
+                description=description,
+                apply_url=apply_url,
+                posted_date=posted_date,
+                skills=final_job.skills,
+                experience_level=final_job.experience_level,
+                salary_min=final_job.salary_min,
+                salary_max=final_job.salary_max,
+                is_remote=final_job.is_remote,
+                score=score,
+            )
+
+        if created:
             logger.info(
-                "job_duplicate_found",
+                "job_inserted_success",
                 source=source_name,
                 title=final_job.title,
-                apply_url=apply_url
+                job_id=job_id,
+                skills_count=len(final_job.skills or []),
+                experience_level=final_job.experience_level,
+                is_remote=final_job.is_remote
             )
-            return JobProcessingResult(
-                source_name=source_name,
-                job_title=final_job.title,
-                raw_normalized=True,
-                parsed_success=parsed_success,
-                inserted=False,
-                duplicate=True
+        else:
+            logger.info(
+                "job_updated_success",
+                source=source_name,
+                title=final_job.title,
+                job_id=job_id,
+                skills_count=len(final_job.skills or []),
+                experience_level=final_job.experience_level,
+                is_remote=final_job.is_remote
             )
-
-        # Step 5: Get or create company
-        identifier = source_name
-        db_company = await company_repo.get_or_create_for_source(
-            source_type=source_type,
-            identifier=identifier,
-            display_name=source_name,
-        )
-
-        # Step 6: Normalize dates
-        posted_raw = final_job.posted_date
-        if not isinstance(posted_raw, (datetime, date)):
-            posted_raw = datetime.fromisoformat(str(posted_raw))
-        posted_date = _posted_date_only(posted_raw)
-
-        # Step 7: Clip text fields to DB limits
-        title = _clip(str(final_job.title), _MAX_TITLE_LEN)
-        location = _clip(str(final_job.location or ""), _MAX_LOCATION_LEN)
-        description = str(final_job.description)
-
-        # Step 8: Insert into database
-        await job_repo.create_job(
-            company_id=db_company.id,
-            title=title,
-            location=location,
-            description=description,
-            apply_url=apply_url,
-            posted_date=posted_date,
-            skills=final_job.skills,
-            experience_level=final_job.experience_level,
-            salary_min=final_job.salary_min,
-            salary_max=final_job.salary_max,
-            is_remote=final_job.is_remote,
-        )
-
-        logger.info(
-            "job_inserted_success",
-            source=source_name,
-            title=final_job.title,
-            job_id=str(db_company.id),
-            skills_count=len(final_job.skills or []),
-            experience_level=final_job.experience_level,
-            is_remote=final_job.is_remote
-        )
 
         return JobProcessingResult(
             source_name=source_name,
             job_title=final_job.title,
             raw_normalized=True,
             parsed_success=parsed_success,
-            inserted=True,
-            duplicate=False
+            inserted=created,
+            duplicate=not created
         )
 
     except Exception as e:
@@ -323,15 +353,22 @@ async def process_source_jobs(
             company_repo = CompanyRepository(session)
             job_repo = JobRepository(session)
 
-            for raw_job_data in raw_jobs:
+            for idx, raw_job_data in enumerate(raw_jobs, 1):
                 result = await process_single_job(
-                    raw_job_data, source.name, source.source_type,
-                    company_repo, job_repo
+                    raw_job_data, source.name, source.source_type, source.company or source.url or source.name,
+                    company_repo, job_repo, session
                 )
                 job_results.append(result)
+                if idx % 50 == 0:
+                    logger.info("pipeline_progress", source=source.name, processed=idx, total=len(raw_jobs))
 
-            # Commit all changes
+            # Commit all accepted changes
             await session.commit()
+            logger.info(
+                "pipeline_commit_done",
+                source=source.name,
+                committed_jobs=sum(1 for r in job_results if r.inserted or r.duplicate),
+            )
 
         # Aggregate results
         processed = len(job_results)
@@ -476,5 +513,13 @@ async def run_main_pipeline(
         sources_successful=successful_sources,
         sources_failed=failed_sources
     )
+    print(f"\n{'='*60}")
+    print(f"  🏁 PIPELINE COMPLETE")
+    print(f"  Fetched {total_jobs_processed} jobs | "
+          f"Inserted {total_insert_success} | "
+          f"Duplicates {total_duplicates} | "
+          f"Failed {total_insert_failures}")
+    print(f"  Sources: {successful_sources}/{total_sources} succeeded")
+    print(f"{'='*60}\n")
 
     return PipelineRunResult(metrics, source_results)

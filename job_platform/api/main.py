@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from job_platform.api.routes import jobs as jobs_routes
+from job_platform.api.routes import saved_jobs as saved_jobs_routes
 from job_platform.config import get_settings
 from job_platform.db.session import engine
 from job_platform.utils.logging import configure_logging, get_logger
@@ -35,6 +36,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application lifespan hooks (startup / shutdown)."""
     settings = get_settings()
     logger.info("application_starting", environment=settings.environment)
+
+    # Debug: verify DB connectivity and job count at startup
+    from job_platform.db.session import session_factory
+    from sqlalchemy import text
+    try:
+        async with session_factory() as session:
+            row = await session.execute(text("SELECT COUNT(*) FROM jobs"))
+            count = row.scalar()
+            print(f"\n📊 STARTUP DB CHECK: {count} jobs in database\n")
+            logger.info("startup_db_check", job_count=count)
+    except Exception as exc:
+        print(f"\n❌ STARTUP DB CHECK FAILED: {exc}\n")
+        logger.error("startup_db_check_failed", error=str(exc))
+
     yield
     await engine.dispose()
     logger.info("application_stopping")
@@ -64,7 +79,9 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    application.include_router(jobs_routes.router)
+    # Include job routes with /api/v1 prefix
+    application.include_router(jobs_routes.router, prefix="/api/v1")
+    application.include_router(saved_jobs_routes.router, prefix="/api/v1")
 
     @application.get("/health", tags=["system"])
     async def health() -> dict[str, str]:

@@ -2,31 +2,32 @@ import React from 'react'
 
 interface PaginationProps {
   total: number
-  limit: number
-  offset: number
-  onPageChange: (newOffset: number) => void
+  page: number
+  pageSize: number
+  hasMore: boolean
+  onPageChange: (newPage: number) => void
   isLoading: boolean
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
   total,
-  limit,
-  offset,
+  page,
+  pageSize,
+  hasMore,
   onPageChange,
   isLoading,
 }) => {
-  const currentPage = Math.floor(offset / limit) + 1
-  const totalPages = Math.ceil(total / limit)
+  const totalPages = Math.ceil(total / pageSize)
 
   const handlePrevious = () => {
-    if (currentPage > 1) {
-      onPageChange((currentPage - 2) * limit)
+    if (page > 1) {
+      onPageChange(page - 1)
     }
   }
 
   const handleNext = () => {
-    if (currentPage < totalPages) {
-      onPageChange(currentPage * limit)
+    if (hasMore) {
+      onPageChange(page + 1)
     }
   }
 
@@ -35,28 +36,28 @@ export const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <div className="mt-8 flex items-center justify-between bg-white p-4 rounded-lg shadow">
-      <div className="text-sm text-gray-600">
-        Showing {offset + 1} to {Math.min(offset + limit, total)} of {total} jobs
+    <div className="mt-8 flex items-center justify-between card p-4">
+      <div className="text-sm text-textSecondary">
+        Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, total)} of {total} jobs
       </div>
 
       <div className="flex gap-2">
         <button
           onClick={handlePrevious}
-          disabled={currentPage === 1 || isLoading}
-          className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 transition"
+          disabled={page === 1 || isLoading}
+          className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-textPrimary bg-white hover:bg-primaryLight disabled:bg-gray-100 disabled:text-textSecondary transition"
         >
           Previous
         </button>
 
-        <span className="px-4 py-2 text-sm text-gray-700">
-          Page {currentPage} of {totalPages}
+        <span className="px-4 py-2 text-sm text-textPrimary">
+          Page {page} of {totalPages}
         </span>
 
         <button
           onClick={handleNext}
-          disabled={currentPage === totalPages || isLoading}
-          className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 transition"
+          disabled={!hasMore || isLoading}
+          className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-textPrimary bg-white hover:bg-primaryLight disabled:bg-gray-100 disabled:text-textSecondary transition"
         >
           Next
         </button>
