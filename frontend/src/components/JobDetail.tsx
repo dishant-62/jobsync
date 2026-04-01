@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { jobApi } from '../api/client'
 import type { Job } from '../types'
 import { SkeletonLoader } from './SkeletonLoader'
@@ -345,9 +345,9 @@ export const JobDetail: React.FC<JobDetailProps> = ({ job: propJob, isEmbedded =
             <div className="bg-primaryLight border border-primary rounded-lg p-6 text-sm text-textPrimary">
               <p>
                 <strong>Need help?</strong> Visit our{' '}
-                <a href="/" className="text-primary hover:text-primaryHover">
+                <Link to="/" className="text-primary hover:text-primaryHover">
                   job listings
-                </a>{' '}
+                </Link>{' '}
                 to find more opportunities or use our search and filters to narrow down your options.
               </p>
             </div>

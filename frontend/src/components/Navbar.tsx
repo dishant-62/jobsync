@@ -102,9 +102,9 @@ const FeaturesDropdown: React.FC<{ items: DropdownItem[] }> = ({ items }) => (
   <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 z-50 animate-dropdown-in">
     <div className="grid gap-1">
       {items.map((item) => (
-        <a
+        <Link
           key={item.label}
-          href={item.href}
+          to={item.href}
           className="flex items-start gap-3 rounded-xl px-3 py-2.5 hover:bg-gray-50 transition-colors group"
         >
           <span className="mt-0.5 text-gray-400 group-hover:text-gray-700 transition-colors shrink-0">
@@ -114,7 +114,7 @@ const FeaturesDropdown: React.FC<{ items: DropdownItem[] }> = ({ items }) => (
             <p className="text-sm font-medium text-gray-900">{item.label}</p>
             <p className="text-xs text-gray-500 mt-0.5 leading-snug">{item.description}</p>
           </div>
-        </a>
+        </Link>
       ))}
     </div>
   </div>
@@ -168,9 +168,9 @@ const DesktopNavItem: React.FC<{ item: NavItem }> = ({ item }) => {
   }
 
   return (
-    <a href={item.href} className={baseClass}>
+    <Link to={item.href!} className={baseClass}>
       {item.label}
-    </a>
+    </Link>
   )
 }
 
@@ -250,14 +250,15 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignIn, user
             {featuresOpen && (
               <div className="mt-1 ml-2 space-y-0.5 animate-dropdown-in">
                 {featuresDropdown.map((f) => (
-                  <a
+                  <Link
                     key={f.label}
-                    href={f.href}
+                    to={f.href}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                    onClick={onClose}
                   >
                     <span className="text-gray-400">{f.icon}</span>
                     {f.label}
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}
@@ -266,14 +267,14 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignIn, user
           {mainNavItems
             .filter((i) => !i.dropdown)
             .map((item) => (
-              <a
+              <Link
                 key={item.label}
-                href={item.href}
+                to={item.href!}
                 className="flex items-center px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
                 onClick={onClose}
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
         </nav>
 
@@ -292,9 +293,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignIn, user
                   <p className="text-xs text-gray-500 truncate">{user.email}</p>
                 </div>
               </div>
-              <a href="/saved" className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors" onClick={onClose}>
+              <Link to="/saved" className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors" onClick={onClose}>
                 ⭐ Saved Jobs
-              </a>
+              </Link>
               <Button variant="outline" size="lg" fullWidth onClick={() => { onLogout(); onClose() }}>
                 Sign Out
               </Button>
@@ -365,12 +366,14 @@ const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
             <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
             <p className="text-xs text-gray-500 truncate">{user.email}</p>
           </div>
-          <a href="/saved"
+          <Link
+            to="/saved"
             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-            onClick={() => setOpen(false)}>
+            onClick={() => setOpen(false)}
+          >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
             Saved Jobs
-          </a>
+          </Link>
           <div className="border-t border-gray-100 mt-1 pt-1">
             <button
               onClick={() => { onLogout(); setOpen(false) }}
