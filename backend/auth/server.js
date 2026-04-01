@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser')
 const passport = require('./config/passport')
 const connectDB = require('./config/db')
 const authRoutes = require('./routes/auth')
+const resumeRoutes = require('./routes/resume')
 
 const app = express()
 
@@ -37,6 +38,7 @@ app.use(passport.initialize())
 
 // ── Routes ────────────────────────────────────────────────────────────────
 app.use('/auth', authRoutes)
+app.use('/resume', resumeRoutes)
 
 // ── Health check ──────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok' }))

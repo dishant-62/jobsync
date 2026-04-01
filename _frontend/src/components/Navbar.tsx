@@ -73,7 +73,7 @@ const featuresDropdown: DropdownItem[] = [
 const mainNavItems: NavItem[] = [
   { label: 'Features', dropdown: featuresDropdown },
   { label: 'AI Agent', href: '/ai-agent' },
-  { label: 'Resume AI', href: '/resume-ai' },
+  { label: 'Resume AI', href: '/resume' },
   { label: 'For Employers', href: '/employers' },
   { label: 'About Us', href: '/about' },
   { label: 'Blog', href: '/blog' },
