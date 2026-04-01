@@ -14,7 +14,8 @@ import asyncio
 import sys
 from pathlib import Path
 
-# Add the project root to Python path
+# Add the project root to Python path so `job_platform` is importable
+# when running this script directly (e.g. `python scripts/run_extended_crawler.py`)
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 

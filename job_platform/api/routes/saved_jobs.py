@@ -13,7 +13,8 @@ from job_platform.schemas.job import JobRead
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["saved-jobs"])
 
-# Mock user ID for now
+# TODO: Replace with real user ID extracted from JWT (see backend/auth server).
+# All users currently share the same saved-job list. This is non-production.
 _MOCK_USER_ID = "guest"
 
 

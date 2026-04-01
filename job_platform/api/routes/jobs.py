@@ -48,7 +48,7 @@ async def list_jobs(
     try:
         # Note: Skills filtering is accepted but not yet implemented
         # (requires PostgreSQL JSON operators or schema restructuring)
-        
+
         total = await repo.count_jobs(
             q=q,
             location=location,
@@ -56,33 +56,27 @@ async def list_jobs(
             is_remote=is_remote,
             skills=None,  # Skills filtering disabled for now
         )
-        
-        logger.info(f"🔍 DEBUG: Total jobs in database: {total}")
-        logger.info(f"🔍 DEBUG: Request params - page: {page}, page_size: {page_size}, q: {q}, location: {location}, experience_level: {experience_level}, is_remote: {is_remote}")
-        
+
         # Validate page number is within valid range
         max_page = math.ceil(total / page_size) if total > 0 else 1
         if page > max_page:
-            logger.warning(f"🔍 DEBUG: Requested page {page} exceeds maximum page {max_page}, adjusting to last page")
             page = max_page
-        
+
         # Calculate offset from page and page_size
         offset = (page - 1) * page_size
-        logger.info(f"🔍 DEBUG: Calculated offset: {offset} (using page {page})")
-        
+
         rows = await repo.search_jobs(
             q=q,
             location=location,
             experience_level=experience_level,
             is_remote=is_remote,
             skills=None,  # Skills filtering disabled for now
-            limit=page_size,  # Use page_size as limit
+            limit=page_size,
             offset=offset,
         )
-        
-        logger.debug(f"Retrieved {len(rows)} jobs from database")
-        logger.info(f"🔍 DEBUG: Jobs retrieved for this page: {len(rows)}")
-        
+
+        logger.debug("Retrieved %d jobs (page=%d, total=%d)", len(rows), page, total)
+
         # Convert ORM models to Pydantic models
         jobs = []
         for job_orm in rows:
@@ -90,28 +84,26 @@ async def list_jobs(
                 job_schema = JobRead.model_validate(job_orm)
                 jobs.append(job_schema)
             except Exception as e:
-                logger.error(f"Failed to validate job {job_orm.id}: {e}", exc_info=True)
+                logger.error("Failed to validate job %s: %s", job_orm.id, e, exc_info=True)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=f"Failed to serialize job: {str(e)}"
                 )
-        
-        # Calculate if there are more pages
+
         has_more = (page * page_size) < total
-        logger.info(f"🔍 DEBUG: has_more calculated: {has_more} (page {page} * page_size {page_size} = {page * page_size} < total {total})")
-        
+
         return JobListResponse(
-            jobs=jobs, 
+            jobs=jobs,
             total=total,
             page=page,
             page_size=page_size,
             has_more=has_more
         )
-    
+
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error in list_jobs: {e}", exc_info=True)
+        logger.error("Error in list_jobs: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"

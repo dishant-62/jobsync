@@ -51,34 +51,34 @@ build/
 # Node.js / Frontend
 
 # Dependencies
-_frontend/node_modules/
-_frontend/.pnp
-_frontend/.pnp.js
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
 
 # Production build
-_frontend/dist/
-_frontend/build/
+frontend/dist/
+frontend/build/
 
 # Misc
-_frontend/.DS_Store
-_frontend/*.pem
+frontend/.DS_Store
+frontend/*.pem
 
 # Debug
-_frontend/npm-debug.log*
-_frontend/yarn-debug.log*
-_frontend/yarn-error.log*
-_frontend/lerna-debug.log*
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/lerna-debug.log*
 
 # Environment variables
-_frontend/.env
-_frontend/.env.local
-_frontend/.env.*.local
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
 
 # Editor directories and files
-_frontend/.vscode/*
-!_frontend/.vscode/extensions.json
-_frontend/.idea
-_frontend/.gitkeep
+frontend/.vscode/*
+!frontend/.vscode/extensions.json
+frontend/.idea
+frontend/.gitkeep
 
 # OS files
 .DS_Store

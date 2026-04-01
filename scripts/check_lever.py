@@ -18,4 +18,5 @@ async def check_lever():
             traceback.print_exc()
 
 print("Running check...")
-asyncio.run(check_lever())
+if __name__ == "__main__":
+    asyncio.run(check_lever())
